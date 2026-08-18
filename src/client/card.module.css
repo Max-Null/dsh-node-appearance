@@ -1,0 +1,207 @@
+/* General-settings row styled with the DSH design tokens, matching the
+   shipped Appearance row (padding 16/0, hairline separator, label-primary
+   title) with the standard chevron expansion. */
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--dsw-alias-border-l2);
+}
+
+.header {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 22px;
+  color: var(--dsw-alias-label-primary);
+}
+
+.chevron {
+  flex: none;
+  color: var(--dsw-alias-label-tertiary);
+  transition: transform 0.16s ease;
+}
+
+.chevronOpen {
+  flex: none;
+  color: var(--dsw-alias-label-tertiary);
+  transform: rotate(180deg);
+  transition: transform 0.16s ease;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 13px;
+}
+
+.rowLabel {
+  flex: 0 0 132px;
+  color: var(--dsw-alias-label-primary);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.rowHint {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 1.5;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.checkbox {
+  accent-color: var(--dsw-alias-brand-primary);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.colorInput {
+  width: 44px;
+  height: 26px;
+  padding: 2px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 6px;
+  background: var(--dsw-alias-bg-layer-3);
+  cursor: pointer;
+}
+
+.colorInput:focus-visible {
+  outline: 2px solid var(--dsw-alias-brand-primary);
+  outline-offset: 1px;
+}
+
+.colorValue {
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+  font-family: ui-monospace, monospace;
+}
+
+.sectionTitle {
+  margin-top: 10px;
+  padding: 10px 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--dsw-alias-label-primary);
+  border-top: 1px solid var(--dsw-alias-border-l1);
+}
+
+.toolRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 13px;
+}
+
+.toolName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dsw-alias-label-secondary);
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.removeButton,
+.addButton {
+  appearance: none;
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 8px;
+  padding: 5px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--dsw-alias-label-secondary);
+  background: none;
+}
+
+.removeButton:hover:not(:disabled),
+.addButton:hover:not(:disabled) {
+  color: var(--dsw-alias-label-primary);
+  border-color: var(--dsw-alias-label-dimmed);
+}
+
+.removeButton:disabled,
+.addButton:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.removeButton:focus-visible,
+.addButton:focus-visible {
+  outline: 2px solid var(--dsw-alias-brand-primary);
+  outline-offset: 1px;
+}
+
+.addRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 4px;
+}
+
+.toolInput {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--dsw-alias-border-l2);
+  background: var(--dsw-alias-bg-layer-3);
+  height: 34px;
+  font: inherit;
+  color: var(--dsw-alias-label-primary);
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.toolInput:focus-visible {
+  border-color: var(--dsw-alias-brand-primary);
+  outline: none;
+}
+
+.statusLine {
+  color: var(--dsw-alias-label-tertiary);
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
