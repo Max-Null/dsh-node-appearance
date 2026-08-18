@@ -98,6 +98,19 @@ describe('buildCss', () => {
     expect(css).toContain(`[data-chat-flow-kind="tool-call"] [data-tool] { --ncolor-accent: ${DEFAULT_COLORS.other}; }`)
   })
 
+  it('declares the unlisted-tool fallback before category rules so categories win the cascade', () => {
+    // The fallback `[data-chat-flow-kind="tool-call"] [data-tool]` and a
+    // category rule `… [data-tool="web_search"]` carry equal specificity (two
+    // attribute selectors each); of two conflicting declarations the later
+    // one wins. A fallback emitted after the category rules would override
+    // every category color, which shipped in v0.1.0 as "everything gray".
+    const css = buildCss({})
+    const fallbackAt = css.indexOf('[data-chat-flow-kind="tool-call"] [data-tool] {')
+    const categoryAt = css.indexOf('[data-tool="web_search"] {')
+    expect(categoryAt).toBeGreaterThan(fallbackAt)
+    expect(fallbackAt).toBeGreaterThanOrEqual(0)
+  })
+
   it('resolves a missing context color from defaults (old stored sections)', () => {
     const colors = resolveColors({ colors: { search: '#111111' } })
     expect(colors.context).toBe(DEFAULT_COLORS.context)

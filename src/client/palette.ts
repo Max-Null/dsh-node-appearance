@@ -45,7 +45,7 @@ export const DEFAULT_COLORS: NodeAppearanceColors = {
 /** Wire tool name → category for the shipped mapping. */
 export const TOOL_CATEGORIES: Record<Exclude<NodeCategory, 'command' | 'thinking' | 'context'>, readonly string[]> = {
   search: ['web_search', 'web_fetch'],
-  agent: ['subagent', 'subagent_fork', 'send_message', 'interrupt_agent', 'list_agents', 'report', 'workflow'],
+  agent: ['subagent', 'subagent_acp', 'subagent_fork', 'send_message', 'interrupt_agent', 'list_agents', 'report', 'workflow'],
   execute: ['bash', 'pwsh', 'run_code', 'terminal_open', 'terminal_close', 'terminal_list', 'terminal_read', 'terminal_send', 'terminal_signal', 'str_replace_editor'],
   file: ['read', 'write', 'edit', 'read_image', 'glob', 'grep'],
   task: ['todo_write', 'create_goal', 'get_goal', 'update_goal', 'job_kill', 'job_list', 'job_output', 'schedule_create', 'schedule_delete', 'schedule_list', 'exit_plan_mode'],
@@ -113,6 +113,12 @@ export function buildCss(settings: NodeAppearanceSettings | undefined): string {
   const toolOverrides = settings?.toolColors
   const lines: string[] = []
 
+  // Unlisted tools keep the neutral fallback. Declared BEFORE the per-tool
+  // rules: both selectors carry equal specificity (two attribute selectors),
+  // so of two conflicting declarations the later one wins — a fallback
+  // declared after the category rules would override every category color.
+  lines.push(`${TOOL_ROW} { --ncolor-accent: ${colors.other}; }`)
+
   // Per-tool accent assignments (explicit overrides win over category color).
   for (const [category, tools] of Object.entries(TOOL_CATEGORIES)) {
     const key = category as Exclude<NodeCategory, 'command' | 'thinking'>
@@ -124,8 +130,6 @@ export function buildCss(settings: NodeAppearanceSettings | undefined): string {
       lines.push(`[data-chat-flow-kind="tool-call"] [data-tool="${attributeLiteral(tool)}"] { --ncolor-accent: ${color}; }`)
     }
   }
-  // Unlisted tools keep the neutral fallback painted by the base rule.
-  lines.push(`${TOOL_ROW} { --ncolor-accent: ${colors.other}; }`)
 
   // Non-tool accent rows.
   lines.push(`${COMMAND_ROW} { --ncolor-accent: ${colors.command}; }`)
