@@ -24,6 +24,8 @@ export interface NodeAppearanceColors {
   command: string
   thinking: string
   context: string
+  attachment: string
+  steering: string
   other: string
 }
 
@@ -47,6 +49,8 @@ export const DEFAULT_COLORS: NodeAppearanceColors = {
   command: '#f97316', // orange — /command nodes
   thinking: '#c4b5fd', // light purple — Think rows
   context: '#8a9bb5', // slate blue — injected context rows (informational)
+  attachment: '#14b8a6', // teal — input-message rows (rc.8)
+  steering: '#f472b6', // pink — steering rows (rc.8)
   other: '#64748b', // slate — every unlisted tool
 }
 
@@ -61,6 +65,8 @@ export const Config: z<Config> = z.object({
     command: z.string().default(DEFAULT_COLORS.command),
     thinking: z.string().default(DEFAULT_COLORS.thinking),
     context: z.string().default(DEFAULT_COLORS.context),
+    attachment: z.string().default(DEFAULT_COLORS.attachment),
+    steering: z.string().default(DEFAULT_COLORS.steering),
     other: z.string().default(DEFAULT_COLORS.other),
   }).default(DEFAULT_COLORS),
   toolColors: z.dict(z.string()).default({}),

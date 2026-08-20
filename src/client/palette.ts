@@ -12,9 +12,9 @@ export const NODE_APPEARANCE_NS = 'node-appearance'
 /** The plugin's style tag identity (removed/replaced on every re-paint). */
 export const STYLE_TAG_ID = `${NODE_APPEARANCE_NS}/rules`
 
-/** One paintable node category. `command`, `thinking`, and `context` are non-tool rows. */
+/** One paintable node category. `command`, `thinking`, `context` are non-tool rows. */
 export type NodeCategory =
-  | 'search' | 'agent' | 'execute' | 'file' | 'task' | 'command' | 'thinking' | 'context' | 'other'
+  | 'search' | 'agent' | 'execute' | 'file' | 'task' | 'command' | 'thinking' | 'context' | 'attachment' | 'steering' | 'other'
 
 /** Accent color per category (CSS colors). */
 export type NodeAppearanceColors = Record<NodeCategory, string>
@@ -39,11 +39,13 @@ export const DEFAULT_COLORS: NodeAppearanceColors = {
   command: '#f97316', // orange — /command nodes
   thinking: '#c4b5fd', // light purple — Think rows
   context: '#8a9bb5', // slate blue — injected context rows (informational)
+  attachment: '#14b8a6', // teal — input-message rows carrying image blocks (rc.8)
+  steering: '#f472b6', // pink — model steering rows (rc.8)
   other: '#64748b', // slate — every unlisted tool
 }
 
 /** Wire tool name → category for the shipped mapping. */
-export const TOOL_CATEGORIES: Record<Exclude<NodeCategory, 'command' | 'thinking' | 'context'>, readonly string[]> = {
+export const TOOL_CATEGORIES: Record<Exclude<NodeCategory, 'command' | 'thinking' | 'context' | 'attachment' | 'steering'>, readonly string[]> = {
   search: ['web_search', 'web_fetch'],
   agent: ['subagent', 'subagent_acp', 'subagent_fork', 'send_message', 'interrupt_agent', 'list_agents', 'report', 'workflow'],
   execute: ['bash', 'pwsh', 'run_code', 'terminal_open', 'terminal_close', 'terminal_list', 'terminal_read', 'terminal_send', 'terminal_signal', 'str_replace_editor'],
@@ -62,15 +64,23 @@ const COMMAND_ROW = '[data-chat-flow-kind="command"]'
 const THINK_ROW = '[data-variant="think"]'
 /** Selector of the injected-context row (the flow-item wrapper). */
 const CONTEXT_ROW = '[data-chat-flow-kind="context"]'
+/** Selector of a settled tool-result row (rc.8: tool results render as their own row). */
+const TOOL_RESULT_ROW = '[data-chat-flow-kind="tool-result"]'
+/** Selector of an input-message row (user-sent; rc.8 attachments ride here). */
+const ATTACHMENT_ROW = '[data-chat-flow-kind="input-message"]'
+/** Selector of a model steering row (rc.8 steering nodes). */
+const STEERING_ROW = '[data-chat-flow-kind="steering"]'
 
 /**
  * The rows that carry the accent paint: the ToolRow root (not its wrapper
  * callRow — both carry data-tool, only the inner row carries data-variant),
- * command nodes, Think rows, and injected-context rows. The 3px inset rail is
- * compensated with a matching padding-left so the rail never covers the
- * row's leading icon.
+ * command nodes, Think rows, injected-context rows, tool-result rows, image
+ * input rows, and steering rows. The 3px inset rail is compensated with a
+ * matching padding-left so the rail never covers the row's leading icon.
  */
-const ACCENTED_ROWS = [TOOL_ROW_ROOT, COMMAND_ROW, THINK_ROW, CONTEXT_ROW].join(',\n')
+const ACCENTED_ROWS = [
+  TOOL_ROW_ROOT, COMMAND_ROW, THINK_ROW, CONTEXT_ROW, TOOL_RESULT_ROW, ATTACHMENT_ROW, STEERING_ROW,
+].join(',\n')
 
 /**
  * Accept a configured CSS color (hex, color functions) or reject it so an
@@ -121,7 +131,7 @@ export function buildCss(settings: NodeAppearanceSettings | undefined): string {
 
   // Per-tool accent assignments (explicit overrides win over category color).
   for (const [category, tools] of Object.entries(TOOL_CATEGORIES)) {
-    const key = category as Exclude<NodeCategory, 'command' | 'thinking'>
+    const key = category as keyof typeof TOOL_CATEGORIES
     for (const tool of tools) {
       const override = toolOverrides?.[tool]
       const color = typeof override === 'string' && isCssColor(override)
@@ -135,6 +145,9 @@ export function buildCss(settings: NodeAppearanceSettings | undefined): string {
   lines.push(`${COMMAND_ROW} { --ncolor-accent: ${colors.command}; }`)
   lines.push(`${THINK_ROW} { --ncolor-accent: ${colors.thinking}; }`)
   lines.push(`${CONTEXT_ROW} { --ncolor-accent: ${colors.context}; }`)
+  lines.push(`${TOOL_RESULT_ROW} { --ncolor-accent: ${colors.file}; }`)
+  lines.push(`${ATTACHMENT_ROW} { --ncolor-accent: ${colors.attachment}; }`)
+  lines.push(`${STEERING_ROW} { --ncolor-accent: ${colors.steering}; }`)
 
   // One shared paint rule: 3px inset left rail (layout-free) + 8% wash. The
   // matching padding-left moves the row content off the rail so the leading
