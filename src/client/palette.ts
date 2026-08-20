@@ -14,7 +14,7 @@ export const STYLE_TAG_ID = `${NODE_APPEARANCE_NS}/rules`
 
 /** One paintable node category. `command`, `thinking`, `context` are non-tool rows. */
 export type NodeCategory =
-  | 'search' | 'agent' | 'execute' | 'file' | 'task' | 'command' | 'thinking' | 'context' | 'attachment' | 'steering' | 'other'
+  | 'search' | 'agent' | 'execute' | 'file' | 'task' | 'command' | 'thinking' | 'context' | 'steering' | 'other'
 
 /** Accent color per category (CSS colors). */
 export type NodeAppearanceColors = Record<NodeCategory, string>
@@ -39,8 +39,7 @@ export const DEFAULT_COLORS: NodeAppearanceColors = {
   command: '#f97316', // orange — /command nodes
   thinking: '#c4b5fd', // light purple — Think rows
   context: '#8a9bb5', // slate blue — injected context rows (informational)
-  attachment: '#14b8a6', // teal — input-message rows carrying image blocks (rc.8)
-  steering: '#f472b6', // pink — model steering rows (rc.8)
+  steering: '#f472b6', // pink — steering rows (rc.8)
   other: '#64748b', // slate — every unlisted tool
 }
 
@@ -66,20 +65,19 @@ const THINK_ROW = '[data-variant="think"]'
 const CONTEXT_ROW = '[data-chat-flow-kind="context"]'
 /** Selector of a settled tool-result row (rc.8: tool results render as their own row). */
 const TOOL_RESULT_ROW = '[data-chat-flow-kind="tool-result"]'
-/** Selector of an input-message row (user-sent; rc.8 attachments ride here). */
-const ATTACHMENT_ROW = '[data-chat-flow-kind="input-message"]'
 /** Selector of a model steering row (rc.8 steering nodes). */
 const STEERING_ROW = '[data-chat-flow-kind="steering"]'
 
 /**
  * The rows that carry the accent paint: the ToolRow root (not its wrapper
  * callRow — both carry data-tool, only the inner row carries data-variant),
- * command nodes, Think rows, injected-context rows, tool-result rows, image
- * input rows, and steering rows. The 3px inset rail is compensated with a
- * matching padding-left so the rail never covers the row's leading icon.
+ * command nodes, Think rows, injected-context rows, tool-result rows, and
+ * steering rows. User input rows are excluded — right-alignment already
+ * distinguishes them (2026-08-20 用户反馈）。 The 3px inset rail is compensated
+ * with a matching padding-left so the rail never covers the row's leading icon.
  */
 const ACCENTED_ROWS = [
-  TOOL_ROW_ROOT, COMMAND_ROW, THINK_ROW, CONTEXT_ROW, TOOL_RESULT_ROW, ATTACHMENT_ROW, STEERING_ROW,
+  TOOL_ROW_ROOT, COMMAND_ROW, THINK_ROW, CONTEXT_ROW, TOOL_RESULT_ROW, STEERING_ROW,
 ].join(',\n')
 
 /**
@@ -146,7 +144,6 @@ export function buildCss(settings: NodeAppearanceSettings | undefined): string {
   lines.push(`${THINK_ROW} { --ncolor-accent: ${colors.thinking}; }`)
   lines.push(`${CONTEXT_ROW} { --ncolor-accent: ${colors.context}; }`)
   lines.push(`${TOOL_RESULT_ROW} { --ncolor-accent: ${colors.file}; }`)
-  lines.push(`${ATTACHMENT_ROW} { --ncolor-accent: ${colors.attachment}; }`)
   lines.push(`${STEERING_ROW} { --ncolor-accent: ${colors.steering}; }`)
 
   // One shared paint rule: 3px inset left rail (layout-free) + 8% wash. The

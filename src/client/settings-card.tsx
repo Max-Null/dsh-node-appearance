@@ -53,7 +53,6 @@ const CATEGORY_LABELS: Record<NodeCategory, string> = {
   command: '指令节点',
   thinking: '思考过程',
   context: '上下文注入',
-  attachment: '图片 / 附件消息',
   steering: '模型引导',
   other: '其他工具',
 }
