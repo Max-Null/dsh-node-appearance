@@ -14,7 +14,7 @@ export const STYLE_TAG_ID = `${NODE_APPEARANCE_NS}/rules`
 
 /** One paintable node category. `command`, `thinking`, `context` are non-tool rows. */
 export type NodeCategory =
-  | 'search' | 'agent' | 'execute' | 'file' | 'task' | 'command' | 'thinking' | 'context' | 'other'
+  | 'search' | 'agent' | 'execute' | 'file' | 'task' | 'command' | 'thinking' | 'context' | 'steering' | 'other'
 
 /** Accent color per category (CSS colors). */
 export type NodeAppearanceColors = Record<NodeCategory, string>
@@ -39,11 +39,12 @@ export const DEFAULT_COLORS: NodeAppearanceColors = {
   command: '#f97316', // orange — /command nodes
   thinking: '#c4b5fd', // light purple — Think rows
   context: '#8a9bb5', // slate blue — injected context rows (informational)
+  steering: '#14b8a6', // teal — steering rows (rc.8)
   other: '#64748b', // slate — every unlisted tool
 }
 
 /** Wire tool name → category for the shipped mapping. */
-export const TOOL_CATEGORIES: Record<Exclude<NodeCategory, 'command' | 'thinking' | 'context'>, readonly string[]> = {
+export const TOOL_CATEGORIES: Record<Exclude<NodeCategory, 'command' | 'thinking' | 'context' | 'steering'>, readonly string[]> = {
   search: ['web_search', 'web_fetch'],
   agent: ['subagent', 'subagent_acp', 'subagent_fork', 'send_message', 'interrupt_agent', 'list_agents', 'report', 'workflow'],
   execute: ['bash', 'pwsh', 'run_code', 'terminal_open', 'terminal_close', 'terminal_list', 'terminal_read', 'terminal_send', 'terminal_signal', 'str_replace_editor'],
@@ -70,7 +71,8 @@ const TOOL_RESULT_ROW = '[data-chat-flow-kind="tool-result"]'
  * callRow — both carry data-tool, only the inner row carries data-variant),
  * command nodes, Think rows, injected-context rows, and tool-result rows.
  * User input rows are excluded — right-alignment already
- * distinguishes them (2026-08-20 用户反馈；steering rows 同因移除）。
+ * distinguishes them (2026-08-20 用户反馈）；steering rows 也走独立规则
+ * （见 buildCss：在 userStack 层做 wash，不涂整行 rail）。
  * The 3px inset rail is compensated
  * with a matching padding-left so the rail never covers the row's leading icon.
  */
@@ -108,6 +110,13 @@ export function resolveColors(settings: NodeAppearanceSettings): NodeAppearanceC
 function attributeLiteral(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
 }
+
+/**
+ * Steering marker icon: a corner-up-left arrow (mid-turn guidance inserted
+ * into the running answer), drawn as a mask so the icon inherits the
+ * configured steering color. Encoded data URI, no external asset.
+ */
+const STEERING_ICON = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='9 14 4 9 9 4'/%3E%3Cpath d='M20 20v-7a4 4 0 0 0-4-4H4'/%3E%3C/svg%3E"
 
 /**
  * Build the complete stylesheet text for one settings snapshot.
@@ -150,6 +159,30 @@ export function buildCss(settings: NodeAppearanceSettings | undefined): string {
   box-shadow: inset 3px 0 0 var(--ncolor-accent);
   background-color: color-mix(in srgb, var(--ncolor-accent) 8%, transparent);
   padding-left: 3px;
+}`)
+
+  // Steering rows (mid-turn user steering) stay visually distinct from plain
+  // user rows with a compass marker beside the right-aligned bubble. The
+  // marker is a mask over the user-stack — the container that hugs the bubble
+  // — positioned to the left of it, so the tint reads as a glyph next to the
+  // message rather than a detached full-width rail (2026-08-21 用户反馈：
+  // 整行 rail 突兀，改在 userStack 层做图标区分；slot 方案不可行：
+  // conversation.message.images 是 single 槽且已被官方 ui-attachment 占用).
+  lines.push(`[data-chat-flow-kind="steering"] [data-time-hover-root] > :first-child {
+  position: relative;
+}`)
+  lines.push(`[data-chat-flow-kind="steering"] [data-time-hover-root] > :first-child::before {
+  content: '';
+  position: absolute;
+  right: 100%;
+  margin-right: 6px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  transform: translateY(-50%);
+  background-color: ${colors.steering};
+  -webkit-mask: url("${STEERING_ICON}") center / contain no-repeat;
+  mask: url("${STEERING_ICON}") center / contain no-repeat;
 }`)
 
   // Visibility switch: hide Think rows entirely on the frontend. `!important`
