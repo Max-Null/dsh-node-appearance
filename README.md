@@ -79,3 +79,9 @@ npm run build       # tsc 类型 + tsdown（lib/index.js + lib/client.js）
 
 - [决策记录](docs/决策/2026-08-17-节点外观插件-独立插件决策.md)
 - [设计方案](docs/设计/DSH节点外观插件-设计方案.md)
+
+## SSID 系列
+
+本插件属于 **`@max-null/*` 插件系列**——这一系列共同构成 **[SSID（思灵 · Seek Soul in Darkness）](https://github.com/Max-Null/seek-soul-in-darkness)** 桌面体验。SSID 是整合它们的盒：`dsh-chat-rail` · `dsh-chinese-thinking` · `dsh-draft-polish` · `dsh-guardian` · `dsh-habit` · `dsh-header-unify` · `dsh-memory` · `dsh-node-appearance` · `dsh-plugin-center` · `dsh-skill-mcp-center` · `dsh-ssid-panels` · `dsh-ssid-zh-ui`。
+
+This plugin belongs to the **`@max-null/*` family** — a set of plugins that together form the **[SSID (思灵 · Seek Soul in Darkness)](https://github.com/Max-Null/seek-soul-in-darkness)** desktop experience.
