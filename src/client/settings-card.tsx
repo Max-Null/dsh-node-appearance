@@ -106,13 +106,15 @@ export function NodeAppearanceRow({ useNodeAppearance, setShowThinking, setCateg
           <div className={`${disabled ? css.disabled : ''}`}>
             <div className={css.row}>
               <label className={css.rowLabel} htmlFor="node-appearance-show-thinking">显示思考过程</label>
-              <input
+              <button
                 id="node-appearance-show-thinking"
-                className={css.checkbox}
-                type="checkbox"
-                checked={showThinking}
-                onChange={(event: ChangeEvent<HTMLInputElement>) => { setShowThinking(event.target.checked) }}
-              />
+                className={`${css.switch}${showThinking ? ' on' : ''}`}
+                type="button"
+                aria-pressed={showThinking}
+                onClick={() => { setShowThinking(!showThinking) }}
+              >
+                <span className={css.knob} />
+              </button>
               <span className={css.rowHint}>关闭后会话中的 Think 思考行隐藏</span>
             </div>
             {(Object.keys(CATEGORY_LABELS) as NodeCategory[]).map(category => (
