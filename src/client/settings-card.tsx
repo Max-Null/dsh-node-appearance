@@ -106,6 +106,7 @@ export function NodeAppearanceRow({ useNodeAppearance, setShowThinking, setCateg
           <div className={`${disabled ? css.disabled : ''}`}>
             <div className={css.row}>
               <label className={css.rowLabel} htmlFor="node-appearance-show-thinking">显示思考过程</label>
+              <span className={css.rowHint}>关闭后会话中的 Think 思考行隐藏</span>
               <button
                 id="node-appearance-show-thinking"
                 className={`${css.switch}${showThinking ? ' on' : ''}`}
@@ -115,7 +116,6 @@ export function NodeAppearanceRow({ useNodeAppearance, setShowThinking, setCateg
               >
                 <span className={css.knob} />
               </button>
-              <span className={css.rowHint}>关闭后会话中的 Think 思考行隐藏</span>
             </div>
             {(Object.keys(CATEGORY_LABELS) as NodeCategory[]).map(category => (
               <div className={css.row} key={category}>
