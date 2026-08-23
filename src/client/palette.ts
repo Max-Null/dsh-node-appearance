@@ -190,6 +190,15 @@ export function buildCss(settings: NodeAppearanceSettings | undefined): string {
   // specificity, but the plugin style tag is injected before the module's).
   if (settings?.showThinking === false) {
     lines.push(`${THINK_ROW} { display: none !important; }`)
+    // A think-only node leaves its flowItem seat with zero height: the seat
+    // still consumes the column's 16px flex gap on both sides, doubling the
+    // spacing between the neighbors. Hide the whole seat when the think row
+    // is the only child of its block container — block-internal thinks
+    // (text + reasoning in one node) stay gap-neutral after hiding the row.
+    lines.push(
+      `[data-chat-flow-kind="assistant"]:has(${THINK_ROW}:only-child),`,
+      `[data-chat-flow-kind="assistant-step"]:has(${THINK_ROW}:only-child) { display: none !important; }`,
+    )
   }
 
   return lines.join('\n')
