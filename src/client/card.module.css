@@ -61,7 +61,8 @@
 }
 
 .rowLabel {
-  flex: 0 0 132px;
+  flex: 1;
+  min-width: 0;
   color: var(--dsw-alias-label-primary);
   font-size: 13px;
   font-weight: 500;
@@ -69,12 +70,10 @@
 }
 
 .rowHint {
+  flex: none;
   color: var(--dsw-alias-label-tertiary);
   font-size: 12px;
   line-height: 1.5;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -85,7 +84,9 @@
   cursor: pointer;
 }
 
-/* 家族开关（dsh-ssid-panels 通知设置同款：40x22 胶囊 + 白色圆钮）。 */
+/* 家族开关（dsh-ssid-panels 通知设置同款：40x22 胶囊 + 白色圆钮）。
+   off 轨道用 border-l4：浅色主题 rgba(0,0,0,.16) 灰、暗色 rgba(255,255,255,.2) 灰，
+   两主题都与白色圆钮有对比（bg-module-platform 浅色下≈纯白会隐形）。 */
 .switch {
   width: 40px;
   height: 22px;
@@ -94,7 +95,7 @@
   border-radius: 11px;
   cursor: pointer;
   padding: 0;
-  background: var(--dsw-alias-bg-module-platform, rgba(128, 148, 168, 0.2));
+  background: var(--dsw-alias-border-l4, rgba(0, 0, 0, 0.16));
   transition: background 0.15s;
 }
 
