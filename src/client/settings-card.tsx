@@ -109,7 +109,7 @@ export function NodeAppearanceRow({ useNodeAppearance, setShowThinking, setCateg
               <span className={css.rowHint}>关闭后会话中的 Think 思考行隐藏</span>
               <button
                 id="node-appearance-show-thinking"
-                className={`${css.switch}${showThinking ? ' on' : ''}`}
+                className={`${css.switch}${showThinking ? ` ${css.on}` : ''}`}
                 type="button"
                 aria-pressed={showThinking}
                 onClick={() => { setShowThinking(!showThinking) }}
