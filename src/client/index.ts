@@ -4,13 +4,16 @@
  * snapshot change), and registers the settings card.
  */
 
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
-import type { SettingsScope } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
+import type { SettingsScope } from '@deepseek-ai/dsh-client-ui-settings/client'
 // Type-only: the ctx.settingsScope Context merge and the slot's declaration.
 // Cross-plugin collaboration goes through cordis services; a value import
 // would fail the client bundle-purity gate.
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings-plugins/client'
+// Type-only: the ctx.slots Context merge comes from the renderer package
+// (slot registry), not from the removed dsh-client-runtime module.
+import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import { buildCss, NODE_APPEARANCE_NS, STYLE_TAG_ID, type NodeAppearanceSettings } from './palette.ts'
 import { NodeAppearanceRow, type NodeAppearanceRowFace } from './settings-card.tsx'
 
@@ -33,16 +36,9 @@ function paint(scope: SettingsScope<NodeAppearanceSettings>): void {
  * @param ctx - client root context.
  */
 export function apply(ctx: ClientContext): void {
-  // settingsScope 由官方 ui-settings 服务提供（运行时存在）；npm client 包
-  // （0.0.1-rc.1）的 ClientContext/SettingsScopeSnapshot 类型落后官方 monorepo
-  // （status/revision/mode 等字段形态不同）——类型期按运行时面取用（any +
-  // 注释），官方类型包同步后随源码回到严格面。行为以官方 shell 实测为准。
-  const settingsScope = (ctx as unknown as { settingsScope: unknown }).settingsScope
-  const scope = (settingsScope as { bind: (o: { namespace: string }) => unknown }).bind({ namespace: NODE_APPEARANCE_NS }) as unknown as {
-    subscribe: (cb: () => void) => () => void
-    getSnapshot: () => { value: NodeAppearanceSettings | undefined; status: 'loading' | 'ready' | 'unavailable'; revision: number; writable: boolean; mode: string }
-    set: (k: string, v: unknown) => Promise<unknown>
-  } as unknown as Parameters<typeof paint>[0]
+  // settingsScope 由官方 ui-settings 服务提供（DSH 0.1.2-alpha 内核 client
+  // 模块表）；bind 返回该命名空间的强类型 scope（read/set/unset/subscribe）。
+  const scope = ctx.settingsScope.bind<NodeAppearanceSettings>({ namespace: NODE_APPEARANCE_NS })
   // Paint once from the current snapshot (defaults before the first Host read).
   paint(scope)
   ctx.effect(

@@ -9,7 +9,8 @@
  */
 
 import { useState, type ChangeEvent, type FormEvent } from 'react'
-import type { SettingsScopeSnapshot } from '@deepseek-ai/dsh-client-runtime/client'
+import type { ObservableSnapshot } from '@deepseek-ai/dsh-client-store'
+import type { SettingsScope, SettingsScopeSnapshot } from '@deepseek-ai/dsh-client-ui-settings/client'
 import { IconChevronDownOutline14 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { InjectFace, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
@@ -23,10 +24,7 @@ import css from './card.module.css'
 export interface NodeAppearanceRowFace {
   hooks: {
     /** The bound settings-scope snapshot, rendered as useNodeAppearance. */
-    nodeAppearance: {
-      getSnapshot(): SettingsScopeSnapshot<NodeAppearanceSettings>
-      subscribe(listener: () => void): () => void
-    }
+    nodeAppearance: ObservableSnapshot<SettingsScopeSnapshot<NodeAppearanceSettings>>
   }
   /** Write the Think visibility switch. */
   setShowThinking(show: boolean): void
