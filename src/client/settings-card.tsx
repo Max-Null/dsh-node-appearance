@@ -38,9 +38,9 @@ export interface NodeAppearanceRowFace {
   removeToolColor(tool: string): void
 }
 
-/** Props the renderer binds for this General row. */
+/** Props the renderer binds for this plugin config card. */
 export type NodeAppearanceRowProps =
-  PropsRuntime<'settings.general.item'>
+  PropsRuntime<'settings.plugin.item'>
   & InjectFace<NodeAppearanceRowFace>
 
 /** Chinese labels per category (product copy is Chinese). */

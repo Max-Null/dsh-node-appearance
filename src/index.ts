@@ -6,13 +6,15 @@
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import { installSettingsSection, settingsNamespace } from '@deepseek-ai/dsh-settings'
+import type {} from '@deepseek-ai/dsh-settings'
 import z from '@deepseek-ai/schemastery'
 
 export const name = 'dsh-node-appearance'
 
-/** The settings namespace this plugin owns (spelled identically in both halves). */
-export const NODE_APPEARANCE_NS = settingsNamespace('node-appearance')
+/** The settings namespace this plugin owns (spelled identically in both halves).
+ *  dsh-settings 0.1.2-alpha.2 起 register/installSection 用 SettingsNamespaceInput
+ *  模板字面量自动 parse——settingsNamespace() 函数已删除，改裸字面量。 */
+export const NODE_APPEARANCE_NS = 'node-appearance'
 
 /** Accent color per category (CSS colors). */
 export interface NodeAppearanceColors {
@@ -75,8 +77,13 @@ export const Config: z<Config> = z.object({
  * @param config - the composed entry config (becomes the section's base layer).
  */
 export function apply(ctx: Context, config: Config): void {
-  installSettingsSection(ctx, NODE_APPEARANCE_NS, Config, config, {
-    setSource: () => {},
-    onChange: () => {},
+  // alpha.2 姿势：settings 服务注入 → SettingsProvider.installSection
+  // （旧独立函数 installSettingsSection/settingsNamespace 已删——官方范例
+  // web-search-deepseek/src/index.ts 同款）。
+  ctx.inject(['settings'], (settingsCtx) => {
+    settingsCtx.settings.installSection(ctx, NODE_APPEARANCE_NS, Config, config, {
+      setSource: () => {},
+      onChange: () => {},
+    })
   })
 }

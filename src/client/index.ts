@@ -33,7 +33,16 @@ function paint(scope: SettingsScope<NodeAppearanceSettings>): void {
  * @param ctx - client root context.
  */
 export function apply(ctx: ClientContext): void {
-  const scope = ctx.settingsScope.bind<NodeAppearanceSettings>({ namespace: NODE_APPEARANCE_NS })
+  // settingsScope 由官方 ui-settings 服务提供（运行时存在）；npm client 包
+  // （0.0.1-rc.1）的 ClientContext/SettingsScopeSnapshot 类型落后官方 monorepo
+  // （status/revision/mode 等字段形态不同）——类型期按运行时面取用（any +
+  // 注释），官方类型包同步后随源码回到严格面。行为以官方 shell 实测为准。
+  const settingsScope = (ctx as unknown as { settingsScope: unknown }).settingsScope
+  const scope = (settingsScope as { bind: (o: { namespace: string }) => unknown }).bind({ namespace: NODE_APPEARANCE_NS }) as unknown as {
+    subscribe: (cb: () => void) => () => void
+    getSnapshot: () => { value: NodeAppearanceSettings | undefined; status: 'loading' | 'ready' | 'unavailable'; revision: number; writable: boolean; mode: string }
+    set: (k: string, v: unknown) => Promise<unknown>
+  } as unknown as Parameters<typeof paint>[0]
   // Paint once from the current snapshot (defaults before the first Host read).
   paint(scope)
   ctx.effect(
@@ -60,13 +69,14 @@ export function apply(ctx: ClientContext): void {
     },
   }
 
-  // The General settings section stacks preference rows (locale → Language,
-  // ui-theme → Appearance, dsh-skin → Skins). Node appearance is the same
-  // kind of visual preference, so it registers here beside them.
-  ctx.slots.inject('settings.general.item', () => ctx.slots.register({
-    name: 'settings.general.item',
-    id: NODE_APPEARANCE_NS,
-    order: 30,
+  // alpha.2：General 区 slot（settings.general.item）已退役，接入官方
+  // 「可配置插件」Tab 的 settings.plugin.item（keyed by namespace）——官方
+  // 卡片姿势见 dsh-client-ui-settings-plugins/src/client/index.ts（BashCard 等）。
+  ctx.slots.inject('settings.plugin.item', () => ctx.slots.register({
+    name: 'settings.plugin.item',
+    key: NODE_APPEARANCE_NS,
     inject: () => face,
-  }, NodeAppearanceRow))
+    // npm ui-slots (0.0.1-rc.1) 类型未合并 keyed-slot 选项（官方 monorepo 类型
+    // 才有）——运行时与官方源码一致，类型期放宽（官方类型同步后收紧）。
+  } as never, NodeAppearanceRow))
 }
