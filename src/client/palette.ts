@@ -168,10 +168,13 @@ export function buildCss(settings: NodeAppearanceSettings | undefined): string {
   // message rather than a detached full-width rail (2026-08-21 用户反馈：
   // 整行 rail 突兀，改在 userStack 层做图标区分；slot 方案不可行：
   // conversation.message.images 是 single 槽且已被官方 ui-attachment 占用).
-  lines.push(`[data-chat-flow-kind="steering"] [data-time-hover-root] > :first-child {
+  // alpha.2 锚点迁移（2026-08-31）：消息行"时间悬浮"标识 data-time-hover-root
+  // 已被 TurnTail/MessageItem 的 data-actions-reveal（always|hover）取代；
+  // kind 与 首子=userStack 结构不变（ChatNodeSeat L206 / MessageItem L178 验证）。
+  lines.push(`[data-chat-flow-kind="steering"] [data-actions-reveal] > :first-child {
   position: relative;
 }`)
-  lines.push(`[data-chat-flow-kind="steering"] [data-time-hover-root] > :first-child::before {
+  lines.push(`[data-chat-flow-kind="steering"] [data-actions-reveal] > :first-child::before {
   content: '';
   position: absolute;
   right: 100%;
