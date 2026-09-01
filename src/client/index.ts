@@ -48,6 +48,13 @@ export function apply(ctx: ClientContext): void {
 
   const face: NodeAppearanceRowFace = {
     hooks: { nodeAppearance: scope },
+    // Staged-edit save: write the three keys in one face call (Host settles
+    // the whole namespace; per-key resolution keeps observable semantics).
+    apply: async (value) => {
+      await scope.set('showThinking', value.showThinking ?? true)
+      await scope.set('colors', value.colors ?? {})
+      await scope.set('toolColors', value.toolColors ?? {})
+    },
     setShowThinking: (show) => { void scope.set('showThinking', show) },
     setCategoryColor: (category, color) => {
       const value = scope.getSnapshot().value

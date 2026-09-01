@@ -1,242 +1,342 @@
-/* General-settings row styled with the DSH design tokens, matching the
-   shipped Appearance row (padding 16/0, hairline separator, label-primary
-   title) with the standard chevron expansion. */
+/* node-appearance config card — mirrors the official plugin-card chrome
+   (PluginCard.module.css + fields.module.css values) with DSH design tokens. */
 
-.group {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--dsw-alias-border-l2);
+.card {
+  list-style: none;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 12px;
+  background: var(--dsw-alias-bg-layer-3);
+  transition: border-color .16s, background .16s;
+}
+
+.card:hover {
+  border-color: var(--dsw-alias-label-dimmed);
+}
+
+/* An open card reads as the one being worked on, not merely taller. */
+.cardOpen {
+  background: var(--dsw-alias-bg-layer-2);
+  border-color: var(--dsw-alias-label-dimmed);
 }
 
 .header {
-  appearance: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
   width: 100%;
-  padding: 0;
+  appearance: none;
   border: 0;
-  border-radius: 6px;
   background: none;
   font: inherit;
+  color: inherit;
   text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+}
+
+.header:focus-visible {
+  outline: 2px solid var(--dsw-alias-brand-primary);
+  outline-offset: -2px;
+}
+
+/* Name over description: the description is what tells two plugins apart. */
+.headText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.name {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--dsw-alias-label-primary);
+}
+
+.description {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.chevron {
+  flex: none;
+  color: var(--dsw-alias-label-tertiary);
+  transition: transform .16s;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+/* Carried on the header so a collapsed card still says it holds edits. */
+.pending {
+  flex: none;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 11px;
+  line-height: 17px;
+  font-weight: 500;
+  white-space: nowrap;
+  background: var(--dsw-alias-bg-module-platform);
+  color: var(--dsw-alias-label-secondary);
+}
+
+.body {
+  border-top: 1px solid var(--dsw-alias-border-l2);
+  margin: 0 16px;
+  padding-bottom: 8px;
+}
+
+.readOnly {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.statusLine {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.disabled {
+  opacity: .55;
+  pointer-events: none;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 0 4px;
+  border-top: 1px solid var(--dsw-alias-border-l2);
+}
+
+.failed {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--dsw-alias-label-error);
+}
+
+.discard,
+.save {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 5px 14px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
   cursor: pointer;
 }
 
-.title {
+.discard {
+  border-color: var(--dsw-alias-border-l2);
+  background: none;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.discard:hover:not(:disabled) {
+  color: var(--dsw-alias-label-primary);
+  border-color: var(--dsw-alias-label-dimmed);
+}
+
+.save {
+  background: var(--dsw-alias-label-primary);
+  color: var(--dsw-alias-bg-layer-3);
+}
+
+.discard:disabled,
+.save:disabled {
+  opacity: .4;
+  cursor: default;
+}
+
+.discard:focus-visible,
+.save:focus-visible {
+  outline: 2px solid var(--dsw-alias-brand-primary);
+  outline-offset: 1px;
+}
+
+/* ── form fields (fields.module.css values) ───────────────────────────── */
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 4px;
+  border-top: 1px solid var(--dsw-alias-border-l2);
+  margin-top: 10px;
+}
+
+.row:first-child {
+  margin-top: 4px;
+}
+
+.rowLabel {
   flex: 1;
   min-width: 0;
   font-size: 13px;
   font-weight: 500;
   line-height: 1.5;
   color: var(--dsw-alias-label-primary);
-}
-
-.chevron {
-  flex: none;
-  color: var(--dsw-alias-label-tertiary);
-  transition: transform 0.16s ease;
-}
-
-.chevronOpen {
-  flex: none;
-  color: var(--dsw-alias-label-tertiary);
-  transform: rotate(180deg);
-  transition: transform 0.16s ease;
-}
-
-.body {
   display: flex;
   flex-direction: column;
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 0;
-  font-size: 13px;
-}
-
-.rowLabel {
-  flex: none;
-  color: var(--dsw-alias-label-primary);
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.5;
+  gap: 2px;
 }
 
 .rowHint {
-  flex: none;
-  color: var(--dsw-alias-label-tertiary);
   font-size: 12px;
   line-height: 1.5;
-  white-space: nowrap;
+  color: var(--dsw-alias-label-tertiary);
+  font-weight: 400;
 }
 
-.checkbox {
-  accent-color: var(--dsw-alias-brand-primary);
-  width: 15px;
-  height: 15px;
+.colorInput {
+  width: 34px;
+  height: 28px;
+  flex: none;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-layer-3);
+  padding: 2px;
   cursor: pointer;
 }
 
-/* 家族开关（dsh-ssid-panels 通知设置同款：40x22 胶囊 + 白色圆钮）。
-   off 轨道用 border-l4：浅色主题 rgba(0,0,0,.16) 灰、暗色 rgba(255,255,255,.2) 灰，
-   两主题都与白色圆钮有对比（bg-module-platform 浅色下≈纯白会隐形）。 */
+.colorValue {
+  flex: none;
+  width: 64px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--dsw-alias-label-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.sectionTitle {
+  margin: 14px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--dsw-alias-label-primary);
+}
+
+.toolName {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--dsw-alias-label-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.removeButton {
+  flex: none;
+  appearance: none;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 8px;
+  padding: 3px 10px;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.5;
+  cursor: pointer;
+  background: none;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.removeButton:hover {
+  color: var(--dsw-alias-label-primary);
+  border-color: var(--dsw-alias-label-dimmed);
+}
+
+.addRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.toolInput {
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-layer-3);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--dsw-alias-label-primary);
+}
+
+.toolInput:focus-visible {
+  outline: none;
+  border-color: var(--dsw-alias-brand-primary);
+}
+
+.toolInput::placeholder {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.addButton {
+  flex: none;
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 5px 14px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  cursor: pointer;
+  background: var(--dsw-alias-label-primary);
+  color: var(--dsw-alias-bg-layer-3);
+}
+
+.addButton:disabled {
+  opacity: .4;
+  cursor: default;
+}
+
+/* Family switch (same treat as the「关于 SSiD」notify toggles). */
 .switch {
+  flex: none;
   width: 40px;
   height: 22px;
-  flex: none;
-  margin-left: auto;
   border: none;
   border-radius: 11px;
   cursor: pointer;
   padding: 0;
-  background: var(--dsw-alias-border-l4, rgba(0, 0, 0, 0.16));
-  transition: background 0.15s;
+  background: var(--dsw-alias-border-l4, rgba(0, 0, 0, .16));
+  transition: background .15s;
 }
 
 .switch.on {
   background: var(--dsw-alias-state-business-primary, #4FC3F7);
 }
 
-.switch .knob {
+.knob {
   display: block;
   width: 16px;
   height: 16px;
   border-radius: 8px;
   background: #fff;
   margin-left: 2px;
-  transition: margin-left 0.15s;
+  transition: margin-left .15s;
+  pointer-events: none;
 }
 
 .switch.on .knob {
   margin-left: 22px;
-}
-
-.colorInput {
-  width: 44px;
-  height: 26px;
-  padding: 2px;
-  margin-left: auto;
-  border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 6px;
-  background: var(--dsw-alias-bg-layer-3);
-  cursor: pointer;
-}
-
-.colorInput:focus-visible {
-  outline: 2px solid var(--dsw-alias-brand-primary);
-  outline-offset: 1px;
-}
-
-.colorValue {
-  color: var(--dsw-alias-label-secondary);
-  font-size: 12px;
-  font-family: ui-monospace, monospace;
-}
-
-.sectionTitle {
-  margin-top: 10px;
-  padding: 10px 0 4px;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.5;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--dsw-alias-label-tertiary);
-  border-top: 1px solid var(--dsw-alias-border-l2);
-}
-
-.toolRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 0;
-  font-size: 13px;
-}
-
-.toolName {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--dsw-alias-label-secondary);
-  font-family: ui-monospace, monospace;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.removeButton,
-.addButton {
-  appearance: none;
-  font: inherit;
-  cursor: pointer;
-  border: none;
-  border-radius: 7px;
-  padding: 5px 8px;
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: var(--dsw-alias-label-secondary);
-  background: none;
-}
-
-.removeButton:hover:not(:disabled),
-.addButton:hover:not(:disabled) {
-  color: var(--dsw-alias-label-primary);
-  background: var(--dsw-alias-bg-layer-1);
-}
-
-.removeButton:disabled,
-.addButton:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.removeButton:focus-visible,
-.addButton:focus-visible {
-  outline: 2px solid var(--dsw-alias-brand-primary);
-  outline-offset: 1px;
-}
-
-.addRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 0 4px;
-}
-
-.toolInput {
-  flex: 1;
-  min-width: 0;
-  border: 1px solid var(--dsw-alias-border-l2);
-  background: var(--dsw-alias-bg-layer-3);
-  height: 34px;
-  font: inherit;
-  color: var(--dsw-alias-label-primary);
-  border-radius: 8px;
-  padding: 0 12px;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.toolInput:focus-visible {
-  border-color: var(--dsw-alias-brand-primary);
-  outline: none;
-}
-
-.statusLine {
-  color: var(--dsw-alias-label-tertiary);
-  margin: 0 0 8px;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.disabled {
-  opacity: 0.5;
-  pointer-events: none;
 }
