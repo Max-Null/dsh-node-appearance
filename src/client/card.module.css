@@ -179,7 +179,10 @@
   margin-top: 10px;
 }
 
+/* The body's own border-top already separates the header from the fields —
+   the first row must not double it. */
 .row:first-child {
+  border-top: none;
   margin-top: 4px;
 }
 
