@@ -1,13 +1,15 @@
 /**
  * The node-appearance plugin config card. Mirrors the official
  * `settings.plugin.item` card chrome (PluginCard: card shell, name-over-
- * description header, unsaved pill, chevron disclosure, save/discard footer)
- * with the DSH design tokens — drawn by hand because a feature plugin must
- * not runtime-import another feature plugin's values (bundle purity gate).
+ * description header, chevron disclosure) with the DSH design tokens —
+ * drawn by hand because a feature plugin must not runtime-import another
+ * feature plugin's values (bundle purity gate).
  *
- * Edits are staged locally (a draft over the served snapshot) and written by
- * one `apply` call on save; a collapsed card carries the unsaved pill, and a
- * refused write keeps its diagnostics visible.
+ * Writes are immediate: picking a color or flipping the Think switch applies
+ * it right away (a palette is a live preview, not a staged form). The footer
+ * carries one「恢复初始设置」button that resets the whole namespace to the
+ * shipped defaults — two-click confirmation so a miss cannot wipe a custom
+ * palette.
  */
 
 import { useState, type ChangeEvent, type FormEvent } from 'react'
@@ -28,7 +30,7 @@ export interface NodeAppearanceRowFace {
     /** The bound settings-scope snapshot, rendered as useNodeAppearance. */
     nodeAppearance: ObservableSnapshot<SettingsScopeSnapshot<NodeAppearanceSettings>>
   }
-  /** Persist the staged value (one batched write; resolves on Host settlement). */
+  /** Persist one full value (reset-to-defaults path; resolves on Host settlement). */
   apply(value: NodeAppearanceSettings): Promise<void>
   /** Write the Think visibility switch. */
   setShowThinking(show: boolean): void
@@ -62,22 +64,27 @@ const CATEGORY_LABELS: Record<NodeCategory, string> = {
 /** Tools shown in the add-override autocomplete-free text input placeholder. */
 const TOOL_SUGGESTIONS = Object.values(TOOL_CATEGORIES).flat().join('、')
 
-/** The card copy (staged-edit chrome, one locale). */
+/** The card copy (one locale). */
 const COPY = {
   title: '节点外观',
   description: '消息节点外观与颜色的偏好设置',
-  unsaved: '未保存',
-  saving: '保存中…',
-  save: '保存',
-  discard: '放弃修改',
+  reset: '恢复初始设置',
+  resetConfirm: '再次点击确认恢复',
+  resetting: '恢复中…',
   readOnly: '配置只读：插件主机侧未挂载或连接非本机。',
-  saveFailed: '保存失败：配置被拒绝或写入冲突。',
   loading: '配置加载中…',
   showThinking: '显示思考过程',
   showThinkingHint: '关闭后会话中的 Think 思考行隐藏',
   toolColors: '工具颜色覆盖（可选）',
   addTool: '添加',
   removeTool: '删除',
+}
+
+/** The shipped defaults, one face call away from any custom palette. */
+const INITIAL_SETTINGS: NodeAppearanceSettings = {
+  showThinking: true,
+  colors: DEFAULT_COLORS,
+  toolColors: {},
 }
 
 /**
@@ -87,63 +94,44 @@ const COPY = {
  */
 export function NodeAppearanceRow({ useNodeAppearance, apply, setShowThinking, setCategoryColor, setToolColor, removeToolColor }: NodeAppearanceRowProps) {
   const [open, setOpen] = useState(false)
-  const [draft, setDraft] = useState<NodeAppearanceSettings | null>(null)
-  const [saving, setSaving] = useState(false)
-  const [saveFailed, setSaveFailed] = useState(false)
+  const [confirmReset, setConfirmReset] = useState(false)
+  const [resetting, setResetting] = useState(false)
   const [toolName, setToolName] = useState('')
   const [toolColor, setToolColorDraft] = useState('#64748b')
   const snapshot = useNodeAppearance(snapshot => snapshot)
   const served = snapshot.value ?? {}
-  const colors = resolveColors(draft ?? served)
-  const toolColors = draft?.toolColors ?? served.toolColors ?? {}
-  const showThinking = draft?.showThinking ?? served.showThinking ?? true
+  const colors = resolveColors(served)
+  const toolColors = served.toolColors ?? {}
+  const showThinking = served.showThinking ?? true
   const disabled = snapshot.writable === false
-  const dirty = draft !== null
   const unavailable = snapshot.status !== 'ready'
 
-  /** Stage one edit: materialize the draft over the served value, then patch. */
-  const stage = (patch: Partial<NodeAppearanceSettings>): void => {
-    setDraft(current => ({ ...(current ?? served), ...patch }))
-  }
-
-  const stageShowThinking = (next: boolean): void => { stage({ showThinking: next }) }
-  const stageCategoryColor = (category: NodeCategory, color: string): void => {
-    // colors is a partial record; staged merge over the served/draft palette.
-    stage({ colors: { ...(draft?.colors ?? served.colors ?? {}), [category]: color } })
-  }
-  const stageToolColor = (tool: string, color: string): void => {
-    stage({ toolColors: { ...toolColors, [tool]: color } })
-  }
-  const stageRemoveToolColor = (tool: string): void => {
-    const next = { ...toolColors }
-    delete next[tool]
-    stage({ toolColors: next })
-  }
-
-  const save = async (): Promise<void> => {
-    if (draft === null || saving) return
-    setSaving(true)
-    setSaveFailed(false)
+  const resetInitial = async (): Promise<void> => {
+    if (resetting) return
+    setResetting(true)
     try {
-      await apply(draft)
-      setDraft(null)
+      await apply(INITIAL_SETTINGS)
+      setConfirmReset(false)
     } catch {
-      setSaveFailed(true)
+      // A refused reset just leaves the current palette in place.
     } finally {
-      setSaving(false)
+      setResetting(false)
     }
   }
 
-  const discard = (): void => {
-    setDraft(null)
-    setSaveFailed(false)
+  const handleReset = (): void => {
+    if (confirmReset) {
+      void resetInitial()
+    } else {
+      setConfirmReset(true)
+    }
   }
 
   const addTool = (event: FormEvent): void => {
     event.preventDefault()
     const name = toolName.trim()
     if (name === '' || !isCssColor(toolColor)) return
-    stageToolColor(name, toolColor)
+    setToolColor(name, toolColor)
     setToolName('')
   }
 
@@ -160,7 +148,6 @@ export function NodeAppearanceRow({ useNodeAppearance, apply, setShowThinking, s
           <span className={css.name}>{COPY.title}</span>
           <span className={css.description}>{COPY.description}</span>
         </span>
-        {dirty ? <span className={css.pending}>{COPY.unsaved}</span> : null}
         <IconChevronDownOutline14 className={css.chevron + (open ? ' ' + css.chevronOpen : '')} />
       </button>
       {open && (
@@ -176,7 +163,7 @@ export function NodeAppearanceRow({ useNodeAppearance, apply, setShowThinking, s
                 className={css.switch + (showThinking ? ' ' + css.on : '')}
                 type="button"
                 aria-pressed={showThinking}
-                onClick={() => { stageShowThinking(!showThinking) }}
+                onClick={() => { setShowThinking(!showThinking) }}
               >
                 <span className={css.knob} />
               </button>
@@ -189,7 +176,7 @@ export function NodeAppearanceRow({ useNodeAppearance, apply, setShowThinking, s
                   className={css.colorInput}
                   type="color"
                   value={colors[category]}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) => { stageCategoryColor(category, event.target.value) }}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => { setCategoryColor(category, event.target.value) }}
                 />
                 <span className={css.colorValue}>{colors[category]}</span>
               </div>
@@ -202,9 +189,9 @@ export function NodeAppearanceRow({ useNodeAppearance, apply, setShowThinking, s
                   className={css.colorInput}
                   type="color"
                   value={isCssColor(color) ? color : DEFAULT_COLORS.other}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) => { stageToolColor(tool, event.target.value) }}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => { setToolColor(tool, event.target.value) }}
                 />
-                <button type="button" className={css.removeButton} onClick={() => { stageRemoveToolColor(tool) }}>{COPY.removeTool}</button>
+                <button type="button" className={css.removeButton} onClick={() => { removeToolColor(tool) }}>{COPY.removeTool}</button>
               </div>
             ))}
             <form className={css.addRow} onSubmit={addTool}>
@@ -220,19 +207,12 @@ export function NodeAppearanceRow({ useNodeAppearance, apply, setShowThinking, s
             </form>
           </div>
           <div className={css.footer}>
-            {saveFailed ? <p className={css.failed} role="status">{COPY.saveFailed}</p> : null}
             <button
               type="button"
-              className={css.discard}
-              disabled={!dirty || saving}
-              onClick={discard}
-            >{COPY.discard}</button>
-            <button
-              type="button"
-              className={css.save}
-              disabled={!dirty || saving}
-              onClick={() => { void save() }}
-            >{saving ? COPY.saving : COPY.save}</button>
+              className={css.reset + (confirmReset ? ' ' + css.resetConfirm : '')}
+              disabled={resetting}
+              onClick={handleReset}
+            >{resetting ? COPY.resetting : confirmReset ? COPY.resetConfirm : COPY.reset}</button>
           </div>
         </div>
       )}
