@@ -80,7 +80,7 @@ node-appearance:
 ```sh
 npm install
 npm run typecheck   # tsc
-npm test            # vitest（CSS 规则生成 + Config schema）
+npm test            # vitest（CSS 规则生成 + Config schema + 提问卡派生）
 npm run build       # tsc 类型 + tsdown（lib/index.js + lib/client.js）
 ```
 
