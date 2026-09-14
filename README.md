@@ -10,14 +10,15 @@ This plugin belongs to the **`@max-null/*` family** — a set of plugins that to
 
 - **节点着色**：工具调用、联网搜索、智能体调用、代码 / 指令执行、文件操作、任务 / 目标、指令节点（`/command`）、思考行（Think）——每种类别一个可配置颜色，左侧 3px 色条 + 淡色底，深 / 浅主题均可读。
 - **工具级颜色覆盖**：任意工具名（如 `web_search`、`subagent`、`run_code`）可单独指定颜色，优先级高于类别色。
+- **提问卡片**：`ask_user_question` 的卡片改为展示**当时给出的全部选项**，被选中的选项用 `ask` 类别色（默认蓝）反显并打勾。官方转录卡只保留已选答案，提问一旦结算就再也看不到其他选项 —— 本插件把选项读回来。
 - **思考过程显示开关**：关闭后 Think 思考行前端隐藏（`display: none`），配置项与配色在同一张设置卡片里。
 - **即时生效**：设置改动立即重绘会话，并持久化到 DSH 用户设置文档（`$DSH_HOME/settings.yaml`）。
 
 ## 截图
 
-| 会话节点着色 | 设置卡片 |
-|---|---|
-| ![会话节点着色](docs/shots/会话面板截图.png) | ![设置卡片](docs/shots/设置页截图.png) |
+| 会话节点着色 | 提问卡片 | 设置卡片 |
+|---|---|---|
+| ![会话节点着色](docs/shots/会话面板截图.png) | ![提问卡片](docs/shots/提问卡片截图.png) | ![设置卡片](docs/shots/设置页截图.png) |
 
 ## 安装
 
@@ -49,6 +50,7 @@ node-appearance:
     execute: '#f59e0b'   # 代码 / 指令执行
     file: '#22c55e'      # 文件操作
     task: '#ec4899'      # 任务 / 目标
+    ask: '#65a30d'       # 提问卡片
     command: '#f97316'   # 指令节点
     thinking: '#c4b5fd'  # 思考过程
     context: '#8a9bb5'   # 上下文注入
@@ -63,10 +65,13 @@ node-appearance:
 - Host half 通过 `installSettingsSection` 注册 `node-appearance` settings namespace，插件配置作为 base 层。
 - Browser half 绑定 `ctx.settingsScope`，把快照交给纯函数 `buildCss()` 生成 CSS，注入一个 `<style data-plugin-css="node-appearance/rules">` 标签；快照变化即重绘。
 - 着色目标全部使用 DSH 会话 DOM 的稳定 data 属性（`data-chat-flow-kind` / `data-tool` / `data-variant`），不依赖任何 CSS Modules 哈希类名。
+- 提问卡片是**接管**而非样式覆盖：`tool.call.toolview` 是 keyed slot，同一 key 只有最低 priority 的注册会渲染（DSH 的 slot 契约原话是 "a key the shipped composition already covers is replaced, not shared"），插件以 `priority: -1` 注册自己的 `ask_user_question` 视图，从调用参数里读回官方丢弃的 `options`。行外壳（24px 折叠行、running 扫光、Inspect 胶囊）与官方 `ToolRow` 逐项对齐，组件复用共享的 `ui-primitives`，locale 文案复用官方 `conversation` 字典。
 
 ## 已知限制
 
 - v0.1 不做运行态动画与节点折叠。
+- 提问卡是接管式实现：组件来自共享 `ui-primitives`、业务字段只读调用与结果的 JSON，但官方 `ask_user_question` 的行外壳若变更，插件需同步。
+- 提问卡高度随内容自适应、不做卡片内滚动；选项极多时由整条会话流承担滚动。
 - 命令节点只有类别色（`command`），暂无命令名级配色。
 - `toolColors` 按工具名精确匹配；DSH 工具名变更时旧条目静默失效（可在设置面板删除）。
 

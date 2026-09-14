@@ -14,7 +14,7 @@ export const STYLE_TAG_ID = `${NODE_APPEARANCE_NS}/rules`
 
 /** One paintable node category. `command`, `thinking`, `context` are non-tool rows. */
 export type NodeCategory =
-  | 'search' | 'agent' | 'execute' | 'file' | 'task' | 'command' | 'thinking' | 'context' | 'steering' | 'other'
+  | 'search' | 'agent' | 'execute' | 'file' | 'task' | 'ask' | 'command' | 'thinking' | 'context' | 'steering' | 'other'
 
 /** Accent color per category (CSS colors). */
 export type NodeAppearanceColors = Record<NodeCategory, string>
@@ -36,6 +36,7 @@ export const DEFAULT_COLORS: NodeAppearanceColors = {
   execute: '#f59e0b', // amber — bash / pwsh / run_code / terminal_*
   file: '#22c55e', // green — read / write / edit / glob / grep
   task: '#ec4899', // pink — todo_write / goal / job_* / schedule_*
+  ask: '#65a30d', // lime — ask_user_question 提问卡（取作 --ask-accent；色相落在 execute 琥珀与 file 绿之间的空档，与 search 的蓝区分开）
   command: '#f97316', // orange — /command nodes
   thinking: '#c4b5fd', // light purple — Think rows
   context: '#8a9bb5', // slate blue — injected context rows (informational)
@@ -50,6 +51,7 @@ export const TOOL_CATEGORIES: Record<Exclude<NodeCategory, 'command' | 'thinking
   execute: ['bash', 'pwsh', 'run_code', 'terminal_open', 'terminal_close', 'terminal_list', 'terminal_read', 'terminal_send', 'terminal_signal', 'str_replace_editor'],
   file: ['read', 'write', 'edit', 'read_image', 'glob', 'grep'],
   task: ['todo_write', 'create_goal', 'get_goal', 'update_goal', 'job_kill', 'job_list', 'job_output', 'schedule_create', 'schedule_delete', 'schedule_list', 'exit_plan_mode'],
+  ask: ['ask_user_question'],
   other: [],
 }
 

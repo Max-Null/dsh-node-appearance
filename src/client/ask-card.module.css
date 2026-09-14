@@ -1,0 +1,253 @@
+/**
+ * 提问卡样式。
+ *
+ * 分两层：折叠行外壳逐项对齐 ui-tool 的 ToolRow.module.css（24px 行高、
+ * 2px 分隔点、13px 次级摘要、running 扫光、hover 才现的 Inspect 胶囊），
+ * 让接管的行与其余工具行无法区分；卡片体是本插件的设计 —— 每个选项成块，
+ * 选中块用 ask 类别的强调色（默认蓝）反显。
+ *
+ * 强调色只经 `--ncolor-accent` 取一次（由 palette.ts 按设置写入），缺省
+ * 兜底 #65a30d（lime，避开 search 的蓝）；其余颜色一律 DSH 语义 token，
+ * 深浅主题自动适配。
+ */
+
+.root {
+  --ask-accent: var(--ncolor-accent, #65a30d);
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  position: relative; /* running 扫光的锚点 */
+  overflow: hidden;
+}
+
+/* 运行中的扫光：与官方工具行同一条动画与同一条渐变。 */
+.root[data-state='running'] .row::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 300px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--dsw-alias-bg-base) 60%, transparent) 55%,
+    transparent 100%
+  );
+  animation: ask-row-sweep 2.6s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes ask-row-sweep {
+  0% { left: -300px; }
+  90%, 100% { left: 100%; }
+}
+
+.leading {
+  flex-shrink: 0;
+}
+
+.chevron {
+  color: var(--dsw-alias-label-secondary);
+}
+
+.title {
+  font-weight: 400;
+}
+
+.sep {
+  flex: none;
+  width: 2px;
+  height: 2px;
+  border-radius: 1px;
+  margin: 0 8px;
+  background: var(--dsw-alias-label-caption);
+}
+
+.summary {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--dsh-content-font-size-secondary, 13px);
+  line-height: calc(24px + var(--dsh-content-font-delta, 0px));
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.bodyWrap {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- 卡片体 ---------- */
+
+/* 整块底色与描边都带 ask 强调色的淡染，让提问在会话流里一眼可辨。
+   高度随内容自适应、不做卡片内滚动：选项是「都该被看见」的内容，官方转录卡
+   的 360px 上限会把常见提问的选项滚到可视区外，恰好挡住用户最想确认的选中
+   项；卡片再长，整条会话流本身还能滚。 */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 4px 0 4px 4px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--ask-accent) 34%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ask-accent) 6%, var(--dsw-alias-bg-base));
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.header {
+  color: var(--ask-accent);
+  font-size: var(--dsh-content-font-size-secondary, 13px);
+  font-weight: 500;
+  line-height: calc(20px + var(--dsh-content-font-delta, 0px));
+}
+
+.question {
+  color: var(--dsw-alias-label-primary);
+  font-size: var(--dsh-content-font-size, 14px);
+  line-height: calc(22px + var(--dsh-content-font-delta, 0px));
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.detail {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: var(--dsh-content-font-size-secondary, 13px);
+  line-height: calc(20px + var(--dsh-content-font-delta, 0px));
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.verdict {
+  margin: 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: var(--dsh-content-font-size-secondary, 13px);
+  line-height: calc(20px + var(--dsh-content-font-delta, 0px));
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* 一个选项一块：未选是安静的白底细边，选中块用 ask 强调色反显 + 勾选。 */
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 1px solid var(--dsw-alias-border-l3);
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-layer-1);
+  color: var(--dsw-alias-label-secondary);
+  font-size: var(--dsh-content-font-size, 14px);
+  line-height: calc(22px + var(--dsh-content-font-delta, 0px));
+}
+
+.option[data-chosen] {
+  border-color: var(--ask-accent);
+  background: color-mix(in srgb, var(--ask-accent) 14%, transparent);
+  color: var(--ask-accent);
+  font-weight: 500;
+}
+
+/* 勾选位固定占宽：未选项与选中项的文本左边缘因此对齐成一列。 */
+.marker {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: calc(22px + var(--dsh-content-font-delta, 0px));
+}
+
+.optionText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.label {
+  overflow-wrap: anywhere;
+}
+
+/* 选项说明跟随所在块的前景色，靠透明度退到次级；选中时不会脱离强调色。 */
+.desc {
+  color: inherit;
+  opacity: 0.72;
+  font-size: var(--dsh-content-font-size-secondary, 13px);
+  font-weight: 400;
+  line-height: calc(20px + var(--dsh-content-font-delta, 0px));
+  overflow-wrap: anywhere;
+}
+
+.answers {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.answerLine {
+  color: var(--dsw-alias-label-primary);
+  font-size: var(--dsh-content-font-size, 14px);
+  line-height: calc(22px + var(--dsh-content-font-delta, 0px));
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.answersEmpty {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: var(--dsh-content-font-size, 14px);
+  line-height: calc(22px + var(--dsh-content-font-delta, 0px));
+}
+
+.fallback {
+  margin: 4px 0 4px 4px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: var(--dsw-font-xs-13);
+  color: var(--dsw-alias-label-tertiary);
+}
+
+/* Inspect 胶囊：与官方工具行同款（hover 才现，键盘可聚焦）。 */
+.inspectButton {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 4px;
+  margin: 4px 0 2px 4px;
+  padding: 2px 8px;
+  border: 0.5px solid var(--dsw-alias-border-l3);
+  border-radius: 999px;
+  corner-shape: round;
+  background: var(--dsw-alias-bg-base);
+  color: var(--dsw-alias-label-secondary);
+  font-size: 11px;
+  line-height: 16px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 100ms ease;
+}
+
+.root:hover .inspectButton,
+.inspectButton:focus-visible {
+  opacity: 1;
+}
+
+.inspectButton:hover {
+  background: var(--dsw-alias-interactive-bg-hover-solid);
+  color: var(--dsw-alias-label-primary);
+}

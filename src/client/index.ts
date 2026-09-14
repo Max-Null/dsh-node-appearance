@@ -16,6 +16,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-settings-plugins/client'
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import { buildCss, NODE_APPEARANCE_NS, STYLE_TAG_ID, type NodeAppearanceSettings } from './palette.ts'
 import { NodeAppearanceRow, type NodeAppearanceRowFace } from './settings-card.tsx'
+import { AskQuestionRow } from './ask-card.tsx'
 
 export const inject = ['slots', 'connection', 'remote', 'settingsScope']
 
@@ -82,4 +83,24 @@ export function apply(ctx: ClientContext): void {
     // npm ui-slots (0.0.1-rc.1) 类型未合并 keyed-slot 选项（官方 monorepo 类型
     // 才有）——运行时与官方源码一致，类型期放宽（官方类型同步后收紧）。
   } as never, NodeAppearanceRow))
+
+  // 接管官方提问卡。官方 ui-tool 在 `tool.call.toolview` 的
+  // `ask_user_question` key 上有一条 priority 0 的注册，而 keyed cell 只
+  // 渲染最低 priority 的条目（ui-slots `register()` 的 shadowing 规则），
+  // priority -1 因此遮蔽它——这是 DSH 支持的接管姿势（ui-tool 的 slot 契约
+  // 原文：a key the shipped composition already covers is replaced, not shared）。
+  //
+  // 接管的唯一原因：官方转录卡只保留已选答案，把调用参数里的 `options`
+  // 丢掉了，提问一旦结算就再也看不到当时有哪些选项（详见 ask-model.ts）。
+  //
+  // 类型期放宽同 settings 那条：`tool.call.toolview` 的 SlotMap 声明属于官方
+  // @deepseek-ai/dsh-client-ui-tool，本插件不为此引入依赖。
+  ctx.slots.inject('tool.call.toolview' as never, () => ctx.slots.register({
+    name: 'tool.call.toolview',
+    key: 'ask_user_question',
+    priority: -1,
+    // 复用官方 conversation 字典：卡片文案（提问 / N/M 已回答 / 未回答 /
+    // 查看 …）全部取自它，插件不新造 locale 命名空间。
+    locale: 'conversation',
+  } as never, AskQuestionRow as never))
 }

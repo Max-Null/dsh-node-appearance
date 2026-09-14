@@ -54,6 +54,7 @@ const CATEGORY_LABELS: Record<NodeCategory, string> = {
   execute: '代码 / 指令执行',
   file: '文件操作',
   task: '任务 / 目标',
+  ask: '提问卡片',
   command: '指令节点',
   thinking: '思考过程',
   context: '上下文注入',

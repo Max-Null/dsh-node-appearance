@@ -23,6 +23,7 @@ export interface NodeAppearanceColors {
   execute: string
   file: string
   task: string
+  ask: string
   command: string
   thinking: string
   context: string
@@ -47,6 +48,7 @@ export const DEFAULT_COLORS: NodeAppearanceColors = {
   execute: '#f59e0b', // amber — bash / pwsh / run_code / terminal_*
   file: '#22c55e', // green — read / write / edit / glob / grep
   task: '#ec4899', // pink — todo_write / goal / job_* / schedule_*
+  ask: '#65a30d', // lime — ask_user_question 提问卡（避开 search 的蓝）
   command: '#f97316', // orange — /command nodes
   thinking: '#c4b5fd', // light purple — Think rows
   context: '#8a9bb5', // slate blue — injected context rows (informational)
@@ -62,6 +64,7 @@ export const Config: z<Config> = z.object({
     execute: z.string().default(DEFAULT_COLORS.execute),
     file: z.string().default(DEFAULT_COLORS.file),
     task: z.string().default(DEFAULT_COLORS.task),
+    ask: z.string().default(DEFAULT_COLORS.ask),
     command: z.string().default(DEFAULT_COLORS.command),
     thinking: z.string().default(DEFAULT_COLORS.thinking),
     context: z.string().default(DEFAULT_COLORS.context),
