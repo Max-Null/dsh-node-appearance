@@ -1,0 +1,138 @@
+/**
+ * 目标详情折叠条样式。
+ *
+ * 按同槽待办面板（ui-conversation 的 TodoPanel.module.css）的度量逐项对齐：
+ * 同一套 dock 宽度公式与卡片上限、同一张 `--dsw-specific-tip` 卡片、同一档
+ * 折叠头（13/24 medium 标题 + 13px 摘要 + chevron），展开区沿用它的 180px
+ * 内滚动上限，滚动条也取同一档 l2 抬升 token。这样它和上面的官方目标条、
+ * 待办、排队卡片读起来是同一摞。
+ */
+
+.root {
+  box-sizing: border-box;
+  flex: none;
+  overflow: hidden;
+  margin: 0 auto;
+  width: calc(
+    100% -
+    var(--dsh-composer-side-clearance) -
+    var(--dsh-composer-side-clearance) -
+    var(--dsh-composer-dock-inset) -
+    var(--dsh-composer-dock-inset) -
+    var(--dsh-composer-dock-inset) -
+    var(--dsh-composer-dock-inset)
+  );
+  max-width: calc(
+    var(--dsh-composer-card-max-width) -
+    var(--dsh-composer-dock-inset) -
+    var(--dsh-composer-dock-inset) -
+    var(--dsh-composer-dock-inset) -
+    var(--dsh-composer-dock-inset)
+  );
+  border: 0.5px solid var(--dsw-alias-border-l1);
+  border-radius: 12px;
+  background: var(--dsw-specific-tip);
+  /* 与待办卡同一张抬升面：展开区在这里面滚动，滑块取 l2 档（自定义属性会
+     继承给 .detail，契约见 ui-theme 的 styles/scrollbar.css）。 */
+  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
+  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 6px 12px;
+}
+
+/* 整行即可点：与待办卡片的折叠头同构。 */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lead {
+  display: grid;
+  flex: none;
+  place-items: center;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.title {
+  flex: none;
+  font-size: 13px;
+  line-height: 24px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-primary);
+}
+
+/* 折叠头右侧只放官方条没有的元信息（版本号 / 自主轮次）。 */
+.summary {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--dsw-alias-label-tertiary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  display: grid;
+  flex: none;
+  place-items: center;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+/* 键 / 值两列：键占自身宽度，值吃掉剩余并把长目标折行显示。 */
+.row {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: 10px;
+  align-items: baseline;
+  margin: 0;
+}
+
+.key {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--dsw-alias-label-caption);
+}
+
+.value {
+  margin: 0;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--dsw-alias-label-secondary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* 附在值文本后面的机器可读标识（阻塞码、目标 id）。 */
+.code {
+  font-family: var(--ds-font-family-code);
+  font-size: 11px;
+  color: var(--dsw-alias-label-caption);
+}
+
+.value > .code:not(:first-child) {
+  margin-left: 8px;
+}

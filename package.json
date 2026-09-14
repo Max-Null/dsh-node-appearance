@@ -1,7 +1,7 @@
 {
   "name": "@max-null/dsh-node-appearance",
   "version": "0.4.0",
-  "description": "会话节点外观插件：节点/工具分类着色（可配置）、提问卡展示全部选项并高亮选中项、思考过程显示开关（DeepSeek Harness Web GUI）",
+  "description": "会话节点外观插件：节点/工具分类着色（可配置）、提问卡展示全部选项并高亮选中、目标详情折叠条、思考过程显示开关（DeepSeek Harness Web GUI）",
   "license": "MIT",
   "publishConfig": {
     "access": "public"

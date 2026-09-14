@@ -11,14 +11,19 @@ This plugin belongs to the **`@max-null/*` family** — a set of plugins that to
 - **节点着色**：工具调用、联网搜索、智能体调用、代码 / 指令执行、文件操作、任务 / 目标、指令节点（`/command`）、思考行（Think）——每种类别一个可配置颜色，左侧 3px 色条 + 淡色底，深 / 浅主题均可读。
 - **工具级颜色覆盖**：任意工具名（如 `web_search`、`subagent`、`run_code`）可单独指定颜色，优先级高于类别色。
 - **提问卡片**：`ask_user_question` 的卡片改为展示**当时给出的全部选项**，被选中的选项用 `ask` 类别色（默认蓝）反显并打勾。官方转录卡只保留已选答案，提问一旦结算就再也看不到其他选项 —— 本插件把选项读回来。
+- **目标详情折叠条**：接在官方目标条下面（借待办卡片的折叠形态），把官方条上被 ellipsis 截断的目标展开成可读详情：完整目标、阶段、阻塞原因、自主轮次、目标标识。只读投影，不碰官方的编辑/暂停/清除。
 - **思考过程显示开关**：关闭后 Think 思考行前端隐藏（`display: none`），配置项与配色在同一张设置卡片里。
 - **即时生效**：设置改动立即重绘会话，并持久化到 DSH 用户设置文档（`$DSH_HOME/settings.yaml`）。
 
 ## 截图
 
-| 会话节点着色 | 提问卡片 | 设置卡片 |
-|---|---|---|
-| ![会话节点着色](docs/shots/会话面板截图.png) | ![提问卡片](docs/shots/提问卡片截图.png) | ![设置卡片](docs/shots/设置页截图.png) |
+| 会话节点着色 | 提问卡片 |
+|---|---|
+| ![会话节点着色](docs/shots/会话面板截图.png) | ![提问卡片](docs/shots/提问卡片截图.png) |
+
+| 目标详情折叠条 | 设置卡片 |
+|---|---|
+| ![目标详情折叠条](docs/shots/目标详情截图.png) | ![设置卡片](docs/shots/设置页截图.png) |
 
 ## 安装
 
@@ -66,6 +71,7 @@ node-appearance:
 - Browser half 绑定 `ctx.settingsScope`，把快照交给纯函数 `buildCss()` 生成 CSS，注入一个 `<style data-plugin-css="node-appearance/rules">` 标签；快照变化即重绘。
 - 着色目标全部使用 DSH 会话 DOM 的稳定 data 属性（`data-chat-flow-kind` / `data-tool` / `data-variant`），不依赖任何 CSS Modules 哈希类名。
 - 提问卡片是**接管**而非样式覆盖：`tool.call.toolview` 是 keyed slot，同一 key 只有最低 priority 的注册会渲染（DSH 的 slot 契约原话是 "a key the shipped composition already covers is replaced, not shared"），插件以 `priority: -1` 注册自己的 `ask_user_question` 视图，从调用参数里读回官方丢弃的 `options`。行外壳（24px 折叠行、running 扫光、Inspect 胶囊）与官方 `ToolRow` 逐项对齐，组件复用共享的 `ui-primitives`，locale 文案复用官方 `conversation` 字典。
+- 目标详情折叠条是**并列追加**而非接管：`conversation.input.dock` 是 list 槽（官方占 `todo` order 0 / `goal` order 10 / `queue` order 20），插件以 `order: 11` 紧随官方目标条追加自己的条目，只读 `useProjection('goal')`。官方的 edit/pause/resume/clear 是 ui-goal 的注册者私有注入面（四个 Remote 动词 + 一个带竞态防护的 activation 订阅源），接管它们等于在本插件里再养一套会写会话数据的 RPC 客户端。
 
 ## 已知限制
 

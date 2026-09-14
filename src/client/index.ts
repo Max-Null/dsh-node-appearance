@@ -17,6 +17,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import { buildCss, NODE_APPEARANCE_NS, STYLE_TAG_ID, type NodeAppearanceSettings } from './palette.ts'
 import { NodeAppearanceRow, type NodeAppearanceRowFace } from './settings-card.tsx'
 import { AskQuestionRow } from './ask-card.tsx'
+import { GoalDetail } from './goal-detail.tsx'
 
 export const inject = ['slots', 'connection', 'remote', 'settingsScope']
 
@@ -103,4 +104,17 @@ export function apply(ctx: ClientContext): void {
     // 查看 …）全部取自它，插件不新造 locale 命名空间。
     locale: 'conversation',
   } as never, AskQuestionRow as never))
+
+  // 目标详情折叠条：挂进输入框上方的 `conversation.input.dock`（list 槽，
+  // 不同 id 各自成格、并列渲染），order 11 紧随官方 ui-goal 的 order 10 ——
+  // 官方条只显示一行被 ellipsis 截断的目标，这里补一个可展开的详情。
+  //
+  // 只读 `useProjection('goal')`，不碰官方条的 edit/pause/resume/clear ——
+  // 那四个 Remote 动词与 activation 订阅源都是 ui-goal 的注册者私有注入面，
+  // 接管它们等于在本插件里再养一套会写会话数据的 RPC 客户端。
+  ctx.slots.inject('conversation.input.dock' as never, () => ctx.slots.register({
+    name: 'conversation.input.dock',
+    id: 'max-null/goal-detail',
+    order: 11,
+  } as never, GoalDetail as never))
 }
