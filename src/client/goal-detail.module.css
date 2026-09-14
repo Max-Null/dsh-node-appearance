@@ -12,7 +12,11 @@
   box-sizing: border-box;
   flex: none;
   overflow: hidden;
-  margin: 0 auto;
+  /* 与上面的官方目标条接成一张卡：吃掉容器 row-gap（实测 6px），顶边不设
+     圆角，上边框留位但透明，于是两块共用一条分界线、外轮廓仍是整张卡片。
+     两条同生同灭（都只在目标存在且未完成时渲染），所以不必考虑单独出现的
+     情况。 */
+  margin: -6px auto 0;
   width: calc(
     100% -
     var(--dsh-composer-side-clearance) -
@@ -30,12 +34,22 @@
     var(--dsh-composer-dock-inset)
   );
   border: 0.5px solid var(--dsw-alias-border-l1);
-  border-radius: 12px;
+  border-top-color: transparent;
+  border-radius: 0 0 12px 12px;
   background: var(--dsw-specific-tip);
   /* 与待办卡同一张抬升面：展开区在这里面滚动，滑块取 l2 档（自定义属性会
      继承给 .detail，契约见 ui-theme 的 styles/scrollbar.css）。 */
   --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
   --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+}
+
+/* 官方目标条的下半截：去圆角、下边框透明，好让上面那张卡继续往下接。
+   官方的卡片面是它内层的第一个 div（`.dock` 只是个居中容器，没有边框），
+   这里按结构选，不依赖 CSS Modules 的哈希类名。 */
+:global([data-goal-bar] > div:first-child) {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-color: transparent;
 }
 
 .body {
