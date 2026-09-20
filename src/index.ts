@@ -22,6 +22,7 @@ export interface NodeAppearanceColors {
   agent: string
   execute: string
   file: string
+  deliver: string
   task: string
   ask: string
   command: string
@@ -47,6 +48,7 @@ export const DEFAULT_COLORS: NodeAppearanceColors = {
   agent: '#a855f7', // purple — subagent / workflow / send_message …
   execute: '#f59e0b', // amber — bash / pwsh / run_code / terminal_*
   file: '#22c55e', // green — read / write / edit / glob / grep
+  deliver: '#06b6d4', // cyan — present 交付文件行（与 file 绿区分，见 client/palette.ts）
   task: '#ec4899', // pink — todo_write / goal / job_* / schedule_*
   ask: '#65a30d', // lime — ask_user_question 提问卡（避开 search 的蓝）
   command: '#f97316', // orange — /command nodes
@@ -63,6 +65,7 @@ export const Config: z<Config> = z.object({
     agent: z.string().default(DEFAULT_COLORS.agent),
     execute: z.string().default(DEFAULT_COLORS.execute),
     file: z.string().default(DEFAULT_COLORS.file),
+    deliver: z.string().default(DEFAULT_COLORS.deliver),
     task: z.string().default(DEFAULT_COLORS.task),
     ask: z.string().default(DEFAULT_COLORS.ask),
     command: z.string().default(DEFAULT_COLORS.command),

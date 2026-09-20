@@ -53,6 +53,7 @@ const CATEGORY_LABELS: Record<NodeCategory, string> = {
   agent: '智能体调用',
   execute: '代码 / 指令执行',
   file: '文件操作',
+  deliver: '交付文件',
   task: '任务 / 目标',
   ask: '提问卡片',
   command: '指令节点',

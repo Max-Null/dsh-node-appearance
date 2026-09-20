@@ -11,13 +11,13 @@
  * 压成「首个 + 数量」，完整清单交给展开态——信息不减，只是分层。
  *
  * 强调色只经 `--ncolor-accent` 取一次（由 palette.ts 按设置写入，present 归
- * file 类别），缺省兜底 #22c55e（file 绿）；其余颜色一律 DSH 语义 token，深浅
+ * deliver 类别），缺省兜底 #06b6d4（青蓝）；其余颜色一律 DSH 语义 token，深浅
  * 主题自动适配。展开体里的文件名不做等宽处理：本插件其余行都用正文字体，路径
  * 靠提亮与缩进来分层，比换字体更安静。
  */
 
 .root {
-  --deliverable-accent: var(--ncolor-accent, #22c55e);
+  --deliverable-accent: var(--ncolor-accent, #06b6d4);
   display: flex;
   flex-direction: column;
 }
@@ -120,11 +120,14 @@
   min-width: 0;
 }
 
-/* 扩展名徽标：定宽成一列，不同长度的后缀不会让文件名左右错开。 */
+/* 扩展名徽标：定宽成一列，不同长度的后缀不会让文件名左右错开。
+   用 width 而非 min-width —— `JSON`/`TSX` 这类四字符后缀会把 min-width 撑开，
+   文件名一列就参差了（实拍发现）。 */
 .ext {
   flex: none;
-  min-width: 32px;
-  padding: 1px 5px;
+  box-sizing: border-box;
+  width: 38px;
+  padding: 1px 4px;
   border-radius: 4px;
   background: color-mix(in srgb, var(--deliverable-accent) 14%, transparent);
   color: var(--deliverable-accent);
