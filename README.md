@@ -20,11 +20,19 @@ This plugin belongs to the **`@max-null/*` family** — a set of plugins that to
 
 | 会话节点着色 | 设置卡片 |
 |---|---|
-| ![会话节点着色](docs/shots/会话面板截图.png) | ![设置卡片](docs/shots/设置页截图.png) |
+| ![会话节点着色](docs/shots/会话面板截图.png) | ![设置卡片](docs/shots/设置卡片.png) |
 
 | 提问卡片 | 目标条（折叠 / 展开） |
 |---|---|
 | ![提问卡片](docs/shots/提问卡片截图.png) | ![目标条折叠](docs/shots/目标详情-折叠.png) ![目标条展开](docs/shots/目标详情-展开.png) |
+
+| 交付文件行（折叠） |
+|---|
+| ![交付行折叠](docs/shots/交付行-折叠.png) |
+
+| 交付文件行（展开 · 青＝交付、绿＝写入） |
+|---|
+| ![交付行展开](docs/shots/交付行-展开.png) |
 
 ## 安装
 
