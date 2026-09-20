@@ -59,6 +59,12 @@ describe('buildCss', () => {
     }
   })
 
+  it('gives the presented-files row the file accent', () => {
+    // 交付行归 file 类别。少了这条映射行会落到 other 的灰，与 read/write 的颜色断裂。
+    expect(TOOL_CATEGORIES.file).toContain('present')
+    expect(buildCss({})).toContain(`[data-tool="present"] { --ncolor-accent: ${DEFAULT_COLORS.file}; }`)
+  })
+
   it('paints command nodes, Think rows, and context rows', () => {
     const css = buildCss({})
     expect(css).toContain(`[data-chat-flow-kind="command"] { --ncolor-accent: ${DEFAULT_COLORS.command}; }`)

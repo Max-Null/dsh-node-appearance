@@ -1,0 +1,206 @@
+/**
+ * 交付行样式。
+ *
+ * 分两层：折叠行外壳逐项对齐 ui-tool 的 ToolRow.module.css（24px 行高、
+ * 2px 分隔点、13px 次级摘要、running 扫光、hover 才现的 Inspect 胶囊）——
+ * 与同插件的提问卡同一套基线，三个接管行因此看不出是三家实现；展开体是
+ * 本插件的设计：逐文件成行（扩展名徽标 + 文件名 + 所在目录），结果文本沿用
+ * 官方 PresentRow 的浅底块，另标一行行数。
+ *
+ * 官方 PresentRow 的折叠态把全部文件名逗号拼接成一行，多文件时读不完；这里
+ * 压成「首个 + 数量」，完整清单交给展开态——信息不减，只是分层。
+ *
+ * 强调色只经 `--ncolor-accent` 取一次（由 palette.ts 按设置写入，present 归
+ * file 类别），缺省兜底 #22c55e（file 绿）；其余颜色一律 DSH 语义 token，深浅
+ * 主题自动适配。展开体里的文件名不做等宽处理：本插件其余行都用正文字体，路径
+ * 靠提亮与缩进来分层，比换字体更安静。
+ */
+
+.root {
+  --deliverable-accent: var(--ncolor-accent, #22c55e);
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  position: relative; /* running 扫光的锚点 */
+  overflow: hidden;
+}
+
+/* 运行中的扫光：与官方工具行同一条动画与同一条渐变。 */
+.root[data-state='running'] .row::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 300px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--dsw-alias-bg-base) 60%, transparent) 55%,
+    transparent 100%
+  );
+  animation: deliverable-row-sweep 2.6s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes deliverable-row-sweep {
+  0% { left: -300px; }
+  90%, 100% { left: 100%; }
+}
+
+.leading {
+  flex-shrink: 0;
+}
+
+.chevron {
+  color: var(--dsw-alias-label-secondary);
+}
+
+.title {
+  font-weight: 400;
+}
+
+.sep {
+  flex: none;
+  width: 2px;
+  height: 2px;
+  border-radius: 1px;
+  margin: 0 8px;
+  background: var(--dsw-alias-label-caption);
+}
+
+.summary {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--dsh-content-font-size-secondary, 13px);
+  line-height: calc(24px + var(--dsh-content-font-delta, 0px));
+  color: var(--dsw-alias-label-tertiary);
+}
+
+/* 状态词固定不压缩：文件名再长也不该把「已交付 / 交付失败」挤掉。 */
+.state {
+  flex: none;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.paths {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bodyWrap {
+  display: flex;
+  flex-direction: column;
+  padding: 2px 0 2px 4px;
+}
+
+/* ---------- 展开体 ---------- */
+
+.files {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* 扩展名徽标：定宽成一列，不同长度的后缀不会让文件名左右错开。 */
+.ext {
+  flex: none;
+  min-width: 32px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--deliverable-accent) 14%, transparent);
+  color: var(--deliverable-accent);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.name {
+  flex: none;
+  color: var(--dsw-alias-label-primary);
+  font-size: var(--dsh-content-font-size, 14px);
+  line-height: calc(20px + var(--dsh-content-font-delta, 0px));
+  overflow-wrap: anywhere;
+}
+
+/* 所在目录：文件名已经在左边，这里只补位置，尾部截断即可（完整路径在 title）。 */
+.path {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: var(--dsh-content-font-size-secondary, 13px);
+  line-height: calc(20px + var(--dsh-content-font-delta, 0px));
+}
+
+.meta {
+  margin-top: 10px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: var(--dsh-content-font-size-secondary, 13px);
+  line-height: calc(20px + var(--dsh-content-font-delta, 0px));
+}
+
+/* 结果文本：沿用官方 PresentRow 的浅底块。不限高、不做内部滚动——
+   交付结果是要读的内容，会话流本身能滚。 */
+.output {
+  margin: 8px 0 0;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-layer-1);
+  color: var(--dsw-alias-label-secondary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+
+/* Inspect 胶囊：与官方工具行同款（hover 才现，键盘可聚焦）。 */
+.inspectButton {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 4px;
+  margin: 8px 0 2px;
+  padding: 2px 8px;
+  border: 0.5px solid var(--dsw-alias-border-l3);
+  border-radius: 999px;
+  corner-shape: round;
+  background: var(--dsw-alias-bg-base);
+  color: var(--dsw-alias-label-secondary);
+  font-size: 11px;
+  line-height: 16px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 100ms ease;
+}
+
+.root:hover .inspectButton,
+.inspectButton:focus-visible {
+  opacity: 1;
+}
+
+.inspectButton:hover {
+  background: var(--dsw-alias-interactive-bg-hover-solid);
+  color: var(--dsw-alias-label-primary);
+}

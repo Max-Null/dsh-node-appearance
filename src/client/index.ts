@@ -17,6 +17,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import { buildCss, NODE_APPEARANCE_NS, STYLE_TAG_ID, type NodeAppearanceSettings } from './palette.ts'
 import { NodeAppearanceRow, type NodeAppearanceRowFace } from './settings-card.tsx'
 import { AskQuestionRow } from './ask-card.tsx'
+import { DeliverableRow } from './deliverable-row.tsx'
 import { GoalDetail } from './goal-detail.tsx'
 
 export const inject = ['slots', 'connection', 'remote', 'settingsScope']
@@ -104,6 +105,21 @@ export function apply(ctx: ClientContext): void {
     // 查看 …）全部取自它，插件不新造 locale 命名空间。
     locale: 'conversation',
   } as never, AskQuestionRow as never))
+
+  // 接管官方交付行。姿势与理由同提问卡：ui-deliverables 在 `tool.call.toolview`
+  // 的 `present` key 上有一条 priority 0 的注册，keyed cell 只渲染最低 priority
+  // 的条目，priority -1 因此遮蔽它。
+  //
+  // 接管的唯一原因：官方折叠态把全部文件名逗号拼成一行，多文件时读不完，也看不出
+  // 这一轮交付了几个（详见 deliverable-row.tsx）。
+  ctx.slots.inject('tool.call.toolview' as never, () => ctx.slots.register({
+    name: 'tool.call.toolview',
+    key: 'present',
+    priority: -1,
+    // 复用官方 deliverables 字典：「交付文件 / 正在交付 / 已交付 / 交付失败 /
+    // 已中断 / 查看调用」全部取自它，插件不新造 locale 命名空间。
+    locale: 'deliverables',
+  } as never, DeliverableRow as never))
 
   // 目标详情折叠条：挂进输入框上方的 `conversation.input.dock`（list 槽，
   // 不同 id 各自成格、并列渲染），order 11 紧随官方 ui-goal 的 order 10 ——
