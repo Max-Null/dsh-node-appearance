@@ -13,7 +13,7 @@
  */
 import { useMemo, useState } from 'react'
 import {
-  DisclosureRow, IconCheckOutline14, IconInspectOutline12, IconQuestionOutline14, StateDot,
+  DisclosureRow, IconCheckOutlineMedium, IconInspectOutlineMedium, IconQuestionOutlineMedium, StateDot,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import { askCardModel, askProgress, type AskCardModel, type AskToolBlock } from './ask-model.ts'
 import css from './ask-card.module.css'
@@ -52,7 +52,7 @@ function OptionRow({ label, description, chosen }: {
   return (
     <div className={css.option} data-chosen={chosen ? '' : undefined}>
       <span className={css.marker} aria-hidden="true">
-        {chosen && <IconCheckOutline14 />}
+        {chosen && <IconCheckOutlineMedium />}
       </span>
       <span className={css.optionText}>
         <span className={css.label}>{label}</span>
@@ -124,7 +124,7 @@ export function AskQuestionRow({ t, block, inspect }: AskCardProps) {
     ? <StateDot state="error" />
     : model.state === 'stopped'
       ? <StateDot state="warning" />
-      : <IconQuestionOutline14 />
+      : <IconQuestionOutlineMedium />
   return (
     // data-tool / data-variant / data-state 必须保留：插件既有的强调色规则
     // （palette.ts 的 TOOL_ROW_ROOT）与其他行样式都按这三个属性匹配。
@@ -155,7 +155,7 @@ export function AskQuestionRow({ t, block, inspect }: AskCardProps) {
             : <pre className={css.fallback}>{model.fallbackText}</pre>}
           {inspect !== undefined && (
             <button type="button" className={css.inspectButton} onClick={inspect}>
-              <IconInspectOutline12 />
+              <IconInspectOutlineMedium />
               {t('row.inspect')}
             </button>
           )}

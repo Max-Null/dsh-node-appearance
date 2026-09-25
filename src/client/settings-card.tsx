@@ -14,21 +14,23 @@
 
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import type { ObservableSnapshot } from '@deepseek-ai/dsh-client-store'
-import type { SettingsScope, SettingsScopeSnapshot } from '@deepseek-ai/dsh-client-ui-settings/client'
-import { IconChevronDownOutline14 } from '@deepseek-ai/dsh-client-ui-primitives'
+import type { ConfigFormSnapshot } from '@deepseek-ai/dsh-client-ui-settings/client'
+import { IconChevronDownOutlineMedium } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { InjectFace, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
+// Type-only: the Plugins page's SlotMap merge (the `plugins.bundle.config` entry).
+import type {} from '@deepseek-ai/dsh-client-ui-plugin-manager/client'
 import {
   DEFAULT_COLORS, isCssColor, resolveColors, TOOL_CATEGORIES,
   type NodeAppearanceSettings, type NodeCategory,
 } from './palette.ts'
 import css from './card.module.css'
 
-/** The card's inject face: the read-only scope snapshot plus write actions. */
+/** The card's inject face: the read-only form snapshot plus write actions. */
 export interface NodeAppearanceRowFace {
   hooks: {
-    /** The bound settings-scope snapshot, rendered as useNodeAppearance. */
-    nodeAppearance: ObservableSnapshot<SettingsScopeSnapshot<NodeAppearanceSettings>>
+    /** The bound configuration-form snapshot, rendered as useNodeAppearance. */
+    nodeAppearance: ObservableSnapshot<ConfigFormSnapshot<NodeAppearanceSettings>>
   }
   /** Persist one full value (reset-to-defaults path; resolves on Host settlement). */
   apply(value: NodeAppearanceSettings): Promise<void>
@@ -44,7 +46,7 @@ export interface NodeAppearanceRowFace {
 
 /** Props the renderer binds for this plugin config card. */
 export type NodeAppearanceRowProps =
-  PropsRuntime<'settings.plugin.item'>
+  PropsRuntime<'plugins.bundle.config'>
   & InjectFace<NodeAppearanceRowFace>
 
 /** Chinese labels per category (product copy is Chinese). */
@@ -150,7 +152,7 @@ export function NodeAppearanceRow({ useNodeAppearance, apply, setShowThinking, s
           <span className={css.name}>{COPY.title}</span>
           <span className={css.description}>{COPY.description}</span>
         </span>
-        <IconChevronDownOutline14 className={css.chevron + (open ? ' ' + css.chevronOpen : '')} />
+        <IconChevronDownOutlineMedium className={css.chevron + (open ? ' ' + css.chevronOpen : '')} />
       </button>
       {open && (
         <div className={css.body}>

@@ -51,6 +51,22 @@ pnpm add @max-null/dsh-node-appearance
 
 重启 `dsh web` 后生效。设置入口：设置 → 插件配置 → **节点外观**。
 
+### 版本对应
+
+本插件的 peer 依赖随 DSH 迭代收紧。**装错版本不会被安装拦住**（pnpm 对不满足的 peer 只警告、不阻断），而是在启动时抛 `TypeError`（例如 `settings.installSection is not a function`）——现象是设置卡不出现，而节点着色仍走默认配色。
+
+| 插件版本 | peer `@deepseek-ai/dsh-settings` | 注册方式 |
+|---|---|---|
+| **0.6.0+**（当前线） | `^0.1.7-rc.2` | host 不再注册 section，由 loader 依 `Config` schema 自动构成 |
+| 0.3.4 – 0.5.0 | `^0.1.2-alpha.2` | 服务方法 `settings.installSection` |
+| ≤ 0.3.3 | `^0.1.1-rc.1` | 独立函数 `installSettingsSection` |
+
+装之前核对实际解析到的版本：
+
+```sh
+node -p "require('@deepseek-ai/dsh-settings/package.json').version"
+```
+
 ## 配置
 
 `cordis.yml` / settings 文档均可覆盖（以下为初始化配色）：
@@ -77,8 +93,8 @@ node-appearance:
 
 双面插件（Host + browser half，`dsh.client` bundle 由 DSH client 模块系统自动加载）：
 
-- Host half 通过 `installSettingsSection` 注册 `node-appearance` settings namespace，插件配置作为 base 层。
-- Browser half 绑定 `ctx.settingsScope`，把快照交给纯函数 `buildCss()` 生成 CSS，注入一个 `<style data-plugin-css="node-appearance/rules">` 标签；快照变化即重绘。
+- Host half **不再自行注册 settings section**：0.1.7 起 `settings.installSection` 已从 settings 服务面移除，section 改由 loader 依本模块导出的 `Config` schema 自动构成（namespace 即 entry id）。可被浏览器半写入的字段（`showThinking` / `colors` / `toolColors`）需用 `Volatile<T>` + `.volatile()` 声明——非 volatile 路径调 `mutate()` 会抛错。
+- Browser half 用 `ctx.configForms.get(NODE_APPEARANCE_NS)` 取同一份表单，把快照交给纯函数 `buildCss()` 生成 CSS，注入一个 `<style data-plugin-css="node-appearance/rules">` 标签；快照变化即重绘。对象字段（`colors` / `toolColors`）的写入走 `mutate()` 路径操作，`set()` 只接受 scalar 字段。
 - 着色目标全部使用 DSH 会话 DOM 的稳定 data 属性（`data-chat-flow-kind` / `data-tool` / `data-variant`），不依赖任何 CSS Modules 哈希类名。
 - 提问卡片是**接管**而非样式覆盖：`tool.call.toolview` 是 keyed slot，同一 key 只有最低 priority 的注册会渲染（DSH 的 slot 契约原话是 "a key the shipped composition already covers is replaced, not shared"），插件以 `priority: -1` 注册自己的 `ask_user_question` 视图，从调用参数里读回官方丢弃的 `options`。行外壳（24px 折叠行、running 扫光、Inspect 胶囊）与官方 `ToolRow` 逐项对齐，组件复用共享的 `ui-primitives`，locale 文案复用官方 `conversation` 字典。
 - 交付文件行同样是**接管**：官方 ui-deliverables 在 `tool.call.toolview` 的 `present` key 上有一条 priority 0 的注册，插件以同样的 `priority: -1` 遮蔽它。字段取用面照官方 `PresentRow`（结算前读 `block.argsRaw`、结算后读 `block.call.argsRaw`，半截 JSON 原样显示参数文本而不是当成零个文件），行外壳与提问卡同一套基线，locale 文案复用官方 `deliverables` 字典（`row.title` / `row.ok` / `row.inspect` …）。派生逻辑在纯函数 `deliverable-model.ts` 里，组件只做 JSX。
@@ -92,7 +108,7 @@ node-appearance:
 - 交付行同为接管式实现：官方 `present` 的字段取用面若变更，插件需同步。
 - 交付行的折叠摘要（「… 等 N 个文件」）与展开区的「输出 N 行」是插件自有文案：官方 `deliverables` 字典没有对应 key，与目标详情条直写中文同一取径。
 - 命令节点只有类别色（`command`），暂无命令名级配色。
-- `toolColors` 按工具名精确匹配；DSH 工具名变更时旧条目静默失效（可在设置面板删除）。
+- `toolColors` 按工具名精确匹配；DSH 工具名变更时旧条目静默失效（可在设置面板删除）。**工具名就是 DOM 上 `data-tool` 属性的值**，不是类别名——例如 Windows 下 shell 工具叫 **`pwsh`，不是 `bash`**；给一个不存在的工具名配颜色不会报错，也不会有任何效果。想知道当前会话里实际有哪些工具名，可在 DevTools 执行 `[...new Set([...document.querySelectorAll('[data-tool]')].map(el => el.dataset.tool))].sort()` 查看。
 
 ## 开发
 

@@ -24,7 +24,7 @@
  * Deliverables 网格，与本 toolview 是两个不同的槽，接管互不影响。
  */
 import { useState } from 'react'
-import { DisclosureRow, IconInspectOutline12, StateDot } from '@deepseek-ai/dsh-client-ui-primitives'
+import { DisclosureRow, IconInspectOutlineMedium, StateDot } from '@deepseek-ai/dsh-client-ui-primitives'
 import {
   deliverableModel, type DeliverableBlock, type DeliverableFile, type DeliverableState,
 } from './deliverable-model.ts'
@@ -113,7 +113,7 @@ export function DeliverableRow({ t, block, inspect }: DeliverableRowProps) {
           )}
           {inspect !== undefined && (
             <button type="button" className={css.inspectButton} onClick={inspect}>
-              <IconInspectOutline12 />
+              <IconInspectOutlineMedium />
               {t('row.inspect')}
             </button>
           )}

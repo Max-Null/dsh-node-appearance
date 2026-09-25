@@ -5,12 +5,12 @@
  */
 
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type { SettingsScope } from '@deepseek-ai/dsh-client-ui-settings/client'
-// Type-only: the ctx.settingsScope Context merge and the slot's declaration.
-// Cross-plugin collaboration goes through cordis services; a value import
-// would fail the client bundle-purity gate.
+import type { ConfigForm } from '@deepseek-ai/dsh-client-ui-settings/client'
+// Type-only: the `ctx.configForms` Context merge, plus the Plugins page's SlotMap
+// merge (the `plugins.bundle.config` entry). Cross-plugin collaboration goes through
+// cordis services; a value import would fail the client bundle-purity gate.
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
-import type {} from '@deepseek-ai/dsh-client-ui-settings-plugins/client'
+import type {} from '@deepseek-ai/dsh-client-ui-plugin-manager/client'
 // Type-only: the ctx.slots Context merge comes from the renderer package
 // (slot registry), not from the removed dsh-client-runtime module.
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
@@ -20,10 +20,10 @@ import { AskQuestionRow } from './ask-card.tsx'
 import { DeliverableRow } from './deliverable-row.tsx'
 import { GoalDetail } from './goal-detail.tsx'
 
-export const inject = ['slots', 'connection', 'remote', 'settingsScope']
+export const inject = ['slots', 'connection', 'remote', 'configForms']
 
 /** Upsert the plugin's paint stylesheet with the current snapshot's CSS. */
-function paint(scope: SettingsScope<NodeAppearanceSettings>): void {
+function paint(form: ConfigForm<NodeAppearanceSettings>): void {
   let tag = document.querySelector<HTMLStyleElement>(`style[data-plugin-css="${STYLE_TAG_ID}"]`)
   if (tag === null) {
     tag = document.createElement('style')
@@ -31,7 +31,7 @@ function paint(scope: SettingsScope<NodeAppearanceSettings>): void {
     tag.dataset.pluginCss = STYLE_TAG_ID
     document.head.appendChild(tag)
   }
-  tag.textContent = buildCss(scope.getSnapshot().value)
+  tag.textContent = buildCss(form.getSnapshot().value)
 }
 
 /**
@@ -39,52 +39,68 @@ function paint(scope: SettingsScope<NodeAppearanceSettings>): void {
  * @param ctx - client root context.
  */
 export function apply(ctx: ClientContext): void {
-  // settingsScope 由官方 ui-settings 服务提供（DSH 0.1.2-alpha 内核 client
-  // 模块表）；bind 返回该命名空间的强类型 scope（read/set/unset/subscribe）。
-  const scope = ctx.settingsScope.bind<NodeAppearanceSettings>({ namespace: NODE_APPEARANCE_NS })
+  // 0.1.7：`settingsScope` 已从 client 服务面移除（`settingsScope` 在 client 包里
+  // 0 命中），取而代之的是官方 ui-settings 提供的 `configForms`。`configForms.get(ns)`
+  // 返回的 `ConfigForm<T>` 与旧的 scope 面几乎同形——`getSnapshot()` / `subscribe()` /
+  // `set(field, value)` 同名同义，额外提供 `mutate(ops, rev)` 与 `unset(field)`。
+  // 参数 ns 是 Host 插件的 entry id（`ConfigForms.get` 的 JSDoc：Unique Host plugin
+  // entry id），与本插件的 `cordis.patch.yml` 行 id（`node-appearance`）同值。
+  const form = ctx.configForms.get<NodeAppearanceSettings>(NODE_APPEARANCE_NS)
   // Paint once from the current snapshot (defaults before the first Host read).
-  paint(scope)
+  paint(form)
   ctx.effect(
-    () => scope.subscribe(() => { paint(scope) }),
+    () => form.subscribe(() => { paint(form) }),
     'dsh-node-appearance: repaint on settings change',
   )
 
   const face: NodeAppearanceRowFace = {
-    hooks: { nodeAppearance: scope },
-    // Staged-edit save: write the three keys in one face call (Host settles
-    // the whole namespace; per-key resolution keeps observable semantics).
+    hooks: { nodeAppearance: form },
+    // Staged-edit save: write the three keys in one write.
+    //
+    // `colors` / `toolColors` 是**对象**字段，不能走 `set(field, value)`——它的
+    // JSDoc 写明只接受 scalar field。改用 `mutate()` 的路径操作：`SettingsPathOpView`
+    // 是 `{ op: 'set'; path: string[]; value }`，其注释说明写入会「creating
+    // intermediate objects」，所以 `['colors']` 整个子树可以一次写掉。
     apply: async (value) => {
-      await scope.set('showThinking', value.showThinking ?? true)
-      await scope.set('colors', value.colors ?? {})
-      await scope.set('toolColors', value.toolColors ?? {})
+      await form.mutate([
+        { op: 'set', path: ['showThinking'], value: value.showThinking ?? true },
+        { op: 'set', path: ['colors'], value: value.colors ?? {} },
+        { op: 'set', path: ['toolColors'], value: value.toolColors ?? {} },
+      ] as never)
     },
-    setShowThinking: (show) => { void scope.set('showThinking', show) },
+    setShowThinking: (show) => { void form.set('showThinking', show) },
     setCategoryColor: (category, color) => {
-      const value = scope.getSnapshot().value
-      void scope.set('colors', { ...value?.colors, [category]: color })
+      const value = form.getSnapshot().value
+      void form.mutate([
+        { op: 'set', path: ['colors'], value: { ...value?.colors, [category]: color } },
+      ] as never)
     },
     setToolColor: (tool, color) => {
-      const value = scope.getSnapshot().value
-      void scope.set('toolColors', { ...value?.toolColors, [tool]: color })
+      const value = form.getSnapshot().value
+      void form.mutate([
+        { op: 'set', path: ['toolColors'], value: { ...value?.toolColors, [tool]: color } },
+      ] as never)
     },
     removeToolColor: (tool) => {
-      const value = scope.getSnapshot().value
+      const value = form.getSnapshot().value
       const toolColors = { ...value?.toolColors }
       delete toolColors[tool]
-      void scope.set('toolColors', toolColors)
+      void form.mutate([{ op: 'set', path: ['toolColors'], value: toolColors }] as never)
     },
   }
 
-  // alpha.2：General 区 slot（settings.general.item）已退役，接入官方
-  // 「可配置插件」Tab 的 settings.plugin.item（keyed by namespace）——官方
-  // 卡片姿势见 dsh-client-ui-settings-plugins/src/client/index.ts（BashCard 等）。
-  ctx.slots.inject('settings.plugin.item', () => ctx.slots.register({
-    name: 'settings.plugin.item',
-    key: NODE_APPEARANCE_NS,
+  // 0.1.7：卡片挂到 Plugins 页的 `plugins.bundle.config`（旧 `settings.plugin.item`
+  // 已不存在——它在 client 包里 0 命中，且替代者 `plugins.item` 按契约注释是
+  // 「OCCUPIED by the official settings pages」的官方专区，第三方不该占）。
+  // 本插件的 package.json 声明了 `dsh.bundle.patch`，因此它自身就是一个 bundle，
+  // key 用**包名**（`config-ledger.ts` 的 `keysOf('plugins.bundle.config')` 直接取
+  // `entry.options.key`，而 `plugins.row.config` 才用 `包名#行id`）。
+  // 该槽只渲染 `view: 'page'`，卡片在 summary 下返回 null（见 settings-card.tsx）。
+  ctx.slots.inject('plugins.bundle.config', () => ctx.slots.register({
+    name: 'plugins.bundle.config',
+    key: '@max-null/dsh-node-appearance',
     inject: () => face,
-    // npm ui-slots (0.0.1-rc.1) 类型未合并 keyed-slot 选项（官方 monorepo 类型
-    // 才有）——运行时与官方源码一致，类型期放宽（官方类型同步后收紧）。
-  } as never, NodeAppearanceRow))
+  }, NodeAppearanceRow))
 
   // 接管官方提问卡。官方 ui-tool 在 `tool.call.toolview` 的
   // `ask_user_question` key 上有一条 priority 0 的注册，而 keyed cell 只

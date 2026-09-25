@@ -16,7 +16,7 @@
  */
 import { useEffect, useState } from 'react'
 import {
-  IconChevronDownOutline14, IconChevronUpOutline14, IconGoalOutline16,
+  IconChevronDownOutlineMedium, IconChevronUpOutlineMedium, IconGoalOutlineMedium,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ReactNode } from 'react'
 import css from './goal-detail.module.css'
@@ -100,11 +100,11 @@ export function GoalDetail({ useProjection }: GoalDetailProps) {
           aria-expanded={!collapsed}
           onClick={() => { setCollapsed(value => !value) }}
         >
-          <span className={css.lead} aria-hidden><IconGoalOutline16 size={14} /></span>
+          <span className={css.lead} aria-hidden><IconGoalOutlineMedium size={14} /></span>
           <span className={css.title}>目标详情</span>
           <span className={css.summary}>{summaryLabel(goal)}</span>
           <span className={css.chevron} aria-hidden>
-            {collapsed ? <IconChevronUpOutline14 /> : <IconChevronDownOutline14 />}
+            {collapsed ? <IconChevronUpOutlineMedium /> : <IconChevronDownOutlineMedium />}
           </span>
         </button>
         {!collapsed && (
