@@ -97,7 +97,9 @@ const INITIAL_SETTINGS: NodeAppearanceSettings = {
  * @returns the card, matching the official plugin-card chrome.
  */
 export function NodeAppearanceRow({ useNodeAppearance, apply, setShowThinking, setCategoryColor, setToolColor, removeToolColor }: NodeAppearanceRowProps) {
-  const [open, setOpen] = useState(false)
+  // 默认展开：卡片是插件页上唯一承载本插件设置的位置，折叠态会让用户以为
+  // 「设置不见了」（2026-09-26 用户反馈）。折叠仍可手动收起。
+  const [open, setOpen] = useState(true)
   const [confirmReset, setConfirmReset] = useState(false)
   const [resetting, setResetting] = useState(false)
   const [toolName, setToolName] = useState('')
