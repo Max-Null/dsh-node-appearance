@@ -6,6 +6,7 @@
 
 import { describe, expect, it } from 'vitest'
 import { Config, DEFAULT_COLORS, NODE_APPEARANCE_NS } from '../src/index.ts'
+import { DEFAULT_COLORS as CLIENT_DEFAULT_COLORS } from '../src/client/palette.ts'
 
 describe('Config schema', () => {
   // 0.1.7：可变字段用 `.volatile()` 声明，解析结果里它们是 `Volatile<T>` 包装，
@@ -35,5 +36,12 @@ describe('Config schema', () => {
   it('owns the documented namespace id', () => {
     // Branded: compare through String so the namespace contract stays spelled.
     expect(String(NODE_APPEARANCE_NS)).toBe('node-appearance')
+  })
+
+  it('mirrors the browser half palette exactly', () => {
+    // 两份默认值无法共享值导入（client bundle 的 purity gate 禁止跨包值引用），
+    // 所以是手工镜像：漂移不会报任何错，只会让 Host 落盘的默认色与浏览器兜底的
+    // 默认色不一致 —— 用户清掉某一项配色时会看到两种颜色，且无从判断哪个对。
+    expect(DEFAULT_COLORS).toEqual(CLIENT_DEFAULT_COLORS)
   })
 })

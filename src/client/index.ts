@@ -19,6 +19,7 @@ import { NodeAppearanceRow, type NodeAppearanceRowFace } from './settings-card.t
 import { AskQuestionRow } from './ask-card.tsx'
 import { DeliverableRow } from './deliverable-row.tsx'
 import { GoalDetail } from './goal-detail.tsx'
+import { TriggerCard } from './trigger-card.tsx'
 
 export const inject = ['slots', 'connection', 'remote', 'configForms']
 
@@ -149,4 +150,27 @@ export function apply(ctx: ClientContext): void {
     id: 'max-null/goal-detail',
     order: 11,
   } as never, GoalDetail as never))
+
+  // 接管官方触发通知卡（「继续执行目标」那一类）。姿势同前两处：keyed cell 只
+  // 渲染最低 priority 的条目，priority -1 因此遮蔽官方的 TurnTriggerNodeView。
+  //
+  // 接管的唯一原因：官方展开体把模型提示词原文（`<goal_round>` / `Objective:`
+  // / `Round:` / JSON 转义）连同骨架一起显示，而骨架对人不构成信息却占满版面
+  // （详见 trigger-card.tsx）。折叠头另加轮次徽标，收起态即可读到走到第几轮。
+  //
+  // 注意遮蔽是**全 key** 的：全部触发来源（goal / schedule / webhook / job …）
+  // 都会走本插件组件，所以 trigger-model.ts 逐条复刻了官方的 kind → 标题/图标
+  // 映射，非目标轮次的来源按官方同构渲染。
+  //
+  // 类型期放宽同前两处：`conversation.chat.node` 的 SlotMap 声明属于官方
+  // @deepseek-ai/dsh-client-ui-chat，本插件不为此引入依赖。
+  ctx.slots.inject('conversation.chat.node' as never, () => ctx.slots.register({
+    name: 'conversation.chat.node',
+    key: 'turn-trigger',
+    priority: -1,
+    // 复用官方 chat 字典：标题（message.trigger.*）、说明
+    // （message.trigger.explanation）、时间模板（clock.md / clock.ymd）全部取自
+    // 它，插件不新造 locale 命名空间。
+    locale: 'chat',
+  } as never, TriggerCard as never))
 }

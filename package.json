@@ -1,7 +1,7 @@
 {
   "name": "@max-null/dsh-node-appearance",
-  "version": "0.6.0",
-  "description": "会话节点外观插件：节点/工具分类着色（可配置）、提问卡展示全部选项并高亮选中、交付文件清单展开、目标详情折叠条、思考过程显示开关（DeepSeek Harness Web GUI）",
+  "version": "0.7.0",
+  "description": "会话节点外观插件：节点/工具分类着色（可配置）、折叠摘要条按类别取色、触发通知卡字段化（接管 turn-trigger）、提问卡展示全部选项、交付文件清单展开、目标详情折叠条、思考过程显示开关（DeepSeek Harness Web GUI）",
   "license": "MIT",
   "publishConfig": {
     "access": "public"
@@ -70,11 +70,11 @@
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.4",
-    "@deepseek-ai/dsh-client-ui-primitives": "^0.1.7-rc.2",
-    "@deepseek-ai/dsh-client-ui-settings": "^0.1.7-rc.2",
-    "@deepseek-ai/dsh-client-ui-plugin-manager": "^0.1.7-rc.2",
-    "@deepseek-ai/dsh-client-ui-slots": "^0.1.7-rc.2",
-    "@deepseek-ai/dsh-settings": "^0.1.7-rc.2",
+    "@deepseek-ai/dsh-client-ui-primitives": ">=0.1.7-rc.2 <0.3.0",
+    "@deepseek-ai/dsh-client-ui-settings": ">=0.1.7-rc.2 <0.3.0",
+    "@deepseek-ai/dsh-client-ui-plugin-manager": ">=0.1.7-rc.2 <0.3.0",
+    "@deepseek-ai/dsh-client-ui-slots": ">=0.1.7-rc.2 <0.3.0",
+    "@deepseek-ai/dsh-settings": ">=0.1.7-rc.2 <0.3.0",
     "react": "^18.2.0"
   },
   "devDependencies": {

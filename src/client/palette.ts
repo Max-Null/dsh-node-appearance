@@ -12,9 +12,9 @@ export const NODE_APPEARANCE_NS = 'node-appearance'
 /** The plugin's style tag identity (removed/replaced on every re-paint). */
 export const STYLE_TAG_ID = `${NODE_APPEARANCE_NS}/rules`
 
-/** One paintable node category. `command`, `thinking`, `context` are non-tool rows. */
+/** One paintable node category. `command`, `thinking`, `context`, `summary` are non-tool rows. */
 export type NodeCategory =
-  | 'search' | 'agent' | 'execute' | 'file' | 'deliver' | 'task' | 'ask' | 'command' | 'thinking' | 'context' | 'steering' | 'other'
+  | 'search' | 'agent' | 'execute' | 'file' | 'deliver' | 'task' | 'ask' | 'command' | 'thinking' | 'context' | 'summary' | 'steering' | 'other'
 
 /** Accent color per category (CSS colors). */
 export type NodeAppearanceColors = Record<NodeCategory, string>
@@ -41,12 +41,13 @@ export const DEFAULT_COLORS: NodeAppearanceColors = {
   command: '#f97316', // orange — /command nodes
   thinking: '#c4b5fd', // light purple — Think rows
   context: '#8a9bb5', // slate blue — injected context rows (informational)
+  summary: '#94a3b8', // slate 400 — Turn-level folded summary bar（容器层摘要，比 context 更淡）
   steering: '#14b8a6', // teal — steering rows (rc.8)
   other: '#64748b', // slate — every unlisted tool
 }
 
 /** Wire tool name → category for the shipped mapping. */
-export const TOOL_CATEGORIES: Record<Exclude<NodeCategory, 'command' | 'thinking' | 'context' | 'steering'>, readonly string[]> = {
+export const TOOL_CATEGORIES: Record<Exclude<NodeCategory, 'command' | 'thinking' | 'context' | 'summary' | 'steering'>, readonly string[]> = {
   search: ['web_search', 'web_fetch'],
   agent: ['subagent', 'subagent_acp', 'subagent_fork', 'send_message', 'interrupt_agent', 'list_agents', 'report', 'workflow'],
   execute: ['bash', 'pwsh', 'run_code', 'terminal_open', 'terminal_close', 'terminal_list', 'terminal_read', 'terminal_send', 'terminal_signal', 'str_replace_editor'],
@@ -55,6 +56,43 @@ export const TOOL_CATEGORIES: Record<Exclude<NodeCategory, 'command' | 'thinking
   task: ['todo_write', 'create_goal', 'get_goal', 'update_goal', 'job_kill', 'job_list', 'job_output', 'schedule_create', 'schedule_delete', 'schedule_list', 'exit_plan_mode'],
   ask: ['ask_user_question'],
   other: [],
+}
+
+/**
+ * The activity keys a step-process group header publishes on its
+ * `data-process-activity` attribute. The set is the key list of ui-chat's
+ * `ChatGroupSeat` `PROCESS_ICONS`, which is identical in kernel 0.1.7-rc.2 and
+ * 0.2.0-rc.1. A closed group reports the kernel's top-ranked category; a
+ * running one reports its live activity.
+ */
+export type ProcessActivityKind =
+  | 'thinking' | 'read' | 'readImage' | 'search' | 'edit' | 'write'
+  | 'commands' | 'code' | 'webSearch' | 'webFetch'
+  | 'subagents' | 'plan' | 'questions' | 'tools'
+
+/**
+ * Process activity → the category whose color paints a collapsed group header.
+ *
+ * The mapping lands on categories the plugin already ships, so group headers
+ * reuse the configured palette and add no settings field. It is deliberately
+ * the same classification the expanded member rows get: `search` here means
+ * code search (`grep`/`glob`, a `file` category tool), not `web_search`.
+ */
+export const PROCESS_ACTIVITIES: Record<ProcessActivityKind, NodeCategory> = {
+  thinking: 'thinking',
+  read: 'file',
+  readImage: 'file',
+  search: 'file',
+  edit: 'file',
+  write: 'file',
+  commands: 'execute',
+  code: 'execute',
+  webSearch: 'search',
+  webFetch: 'search',
+  subagents: 'agent',
+  plan: 'task',
+  questions: 'ask',
+  tools: 'other',
 }
 
 /** Selector matching every tool row inside a tool-call node. */
@@ -69,11 +107,58 @@ const THINK_ROW = '[data-variant="think"]'
 const CONTEXT_ROW = '[data-chat-flow-kind="context"]'
 /** Selector of a settled tool-result row (rc.8: tool results render as their own row). */
 const TOOL_RESULT_ROW = '[data-chat-flow-kind="tool-result"]'
+/**
+ * Selector of a **collapsed** Turn-level summary bar — the outermost fold
+ * ("已完成工作 · 用时 35 秒" / "深度求索中，用时 N"). One Turn's members sit
+ * under it, each painting itself.
+ *
+ * `data-open` is present exactly while those members are expanded, so
+ * `:not([data-open])` is the folded state. Both kernel 0.1.7-rc.2 and
+ * 0.2.0-rc.1 publish it on the same button; 0.2.0 moved the running label to
+ * `RunningStatus` (`data-chat-running`) but left this node's attributes alone.
+ *
+ * Deliberately NOT in {@link ACCENTED_ROWS}: the kernel renders this one as a
+ * full-width section divider (`padding: 0` over a bottom hairline), not as a
+ * block row. An inset rail lands flush against the label and reads as a stray
+ * vertical stroke, and the 3px `padding-left` that keeps the rail off the text
+ * pushes the whole bar out of line with every other row. It takes the accent on
+ * that existing hairline instead, plus the same 8% wash.
+ */
+const TURN_SUMMARY = '[data-turn-process]:not([data-open])'
+/**
+ * Selector of a collapsed step-process group header — the one-line summary the
+ * kernel folds a run of tool calls into ("已读取文件并执行了命令").
+ *
+ * Collapsed only: while the group is open its member rows carry their own
+ * category colors, and painting the header too would stack two colored layers.
+ * The `aria-expanded` attribute is the header button's own disclosure state.
+ *
+ * `activity` narrows the selector to one published value. Narrowing does NOT
+ * raise specificity: `[attr]` and `[attr="value"]` each count as exactly one
+ * attribute selector. The general form must therefore be declared first and the
+ * per-activity forms after it — `buildCss` does that, and the palette spec
+ * guards the order. Same mechanism, same trap, as the unlisted-tool fallback.
+ * @param activity - one published activity, or undefined for the general form.
+ * @returns a CSS attribute selector for the collapsed process-group header.
+ */
+function collapsedProcessHeader(activity?: ProcessActivityKind): string {
+  const value = activity === undefined ? '' : `="${activity}"`
+  return `[data-step-process] [data-process-activity${value}][aria-expanded="false"]`
+}
 
 /**
- * The rows that carry the accent paint: the ToolRow root (not its wrapper
+ * The same header while expanded: no paint, and no `--ncolor-accent` read. It
+ * exists only to hold the paint rule's 3px `padding-left`, so opening a group
+ * does not shift its header sideways.
+ */
+const PROCESS_HEADER_OPEN = '[data-step-process] [data-process-activity][aria-expanded="true"]'
+
+/**
+ * The rows that carry the accent rail + wash: the ToolRow root (not its wrapper
  * callRow — both carry data-tool, only the inner row carries data-variant),
- * command nodes, Think rows, injected-context rows, and tool-result rows.
+ * command nodes, Think rows, injected-context rows, tool-result rows, and a
+ * collapsed step-process group header. The collapsed Turn summary bar is
+ * deliberately absent — see {@link TURN_SUMMARY}.
  * User input rows are excluded — right-alignment already
  * distinguishes them (2026-08-20 用户反馈）；steering rows 也走独立规则
  * （见 buildCss：在 userStack 层做 wash，不涂整行 rail）。
@@ -81,7 +166,7 @@ const TOOL_RESULT_ROW = '[data-chat-flow-kind="tool-result"]'
  * with a matching padding-left so the rail never covers the row's leading icon.
  */
 const ACCENTED_ROWS = [
-  TOOL_ROW_ROOT, COMMAND_ROW, THINK_ROW, CONTEXT_ROW, TOOL_RESULT_ROW,
+  TOOL_ROW_ROOT, COMMAND_ROW, THINK_ROW, CONTEXT_ROW, TOOL_RESULT_ROW, collapsedProcessHeader(),
 ].join(',\n')
 
 /**
@@ -155,6 +240,18 @@ export function buildCss(settings: NodeAppearanceSettings | undefined): string {
   lines.push(`${THINK_ROW} { --ncolor-accent: ${colors.thinking}; }`)
   lines.push(`${CONTEXT_ROW} { --ncolor-accent: ${colors.context}; }`)
   lines.push(`${TOOL_RESULT_ROW} { --ncolor-accent: ${colors.file}; }`)
+  lines.push(`${TURN_SUMMARY} { --ncolor-accent: ${colors.summary}; }`)
+
+  // Collapsed process-group headers, keyed by the activity the kernel publishes
+  // on the header button. The general form is the fallback for an activity this
+  // build does not know about, declared FIRST for the same cascade reason as the
+  // unlisted-tool fallback above: narrowing an attribute selector does not raise
+  // specificity, so a fallback emitted after these mappings would override every
+  // one of them and turn all group headers gray.
+  lines.push(`${collapsedProcessHeader()} { --ncolor-accent: ${colors.other}; }`)
+  for (const activity of Object.keys(PROCESS_ACTIVITIES) as ProcessActivityKind[]) {
+    lines.push(`${collapsedProcessHeader(activity)} { --ncolor-accent: ${colors[PROCESS_ACTIVITIES[activity]]}; }`)
+  }
 
   // One shared paint rule: 3px inset left rail (layout-free) + 8% wash. The
   // matching padding-left moves the row content off the rail so the leading
@@ -163,6 +260,21 @@ export function buildCss(settings: NodeAppearanceSettings | undefined): string {
   box-shadow: inset 3px 0 0 var(--ncolor-accent);
   background-color: color-mix(in srgb, var(--ncolor-accent) 8%, transparent);
   padding-left: 3px;
+}`)
+
+  // Group headers lead with an icon, so their rail wants more air than the
+  // shared 3px — at 3px the rail sits flush against the glyph and reads as a
+  // stray stroke. Declared after the shared rule (equal specificity, so the
+  // later one wins) and held identical while open so toggling cannot shift it.
+  lines.push(`${collapsedProcessHeader()} { padding-left: 8px; }`)
+  lines.push(`${PROCESS_HEADER_OPEN} { padding-left: 8px; }`)
+
+  // The Turn summary bar is a section divider, not a block row: it takes the
+  // accent on the hairline the kernel already draws under it, plus the shared
+  // 8% wash. No rail and no indent, so it stays flush with the rows around it.
+  lines.push(`${TURN_SUMMARY} {
+  border-bottom-color: var(--ncolor-accent);
+  background-color: color-mix(in srgb, var(--ncolor-accent) 8%, transparent);
 }`)
 
   // Steering rows (mid-turn user steering) stay visually distinct from plain

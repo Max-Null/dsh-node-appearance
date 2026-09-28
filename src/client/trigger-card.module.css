@@ -1,0 +1,162 @@
+/*
+ * 触发通知卡的样式。
+ *
+ * 外壳逐项对齐官方 `TurnTriggerNodeView.module.css`（同一张卡片、同一个折叠头、
+ * 同一套字号与间距），这样接管之后视觉上接得住。新增的只有轮次徽标与字段化的
+ * 展开体。
+ *
+ * 颜色一律走 `--dsw-*` 语义 token，不写颜色字面量（DSH 客户端样式规范）。
+ */
+
+.root {
+  min-width: 0;
+  border: 0.5px solid var(--dsw-alias-border-l1);
+  border-radius: var(--dsw-radius-xl);
+  background: var(--dsw-alias-markdown-code-block);
+  transition: background-color 100ms ease;
+}
+
+.root:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 0;
+  background: none;
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.title {
+  flex: none;
+  font: var(--dsw-font-xs-13);
+}
+
+/*
+ * 轮次徽标：官方折叠头没有的信息。收起态唯一能读到「走到第几轮」的地方，
+ * 所以它跟着标题而不是留在展开区（展开区不再重复这个数字）。
+ * 等宽数字避免轮次跳动时徽标宽度跟着抖。
+ */
+.round {
+  flex: none;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-secondary);
+  font: var(--dsw-font-xxs-12);
+  font-variant-numeric: tabular-nums;
+}
+
+.time {
+  flex: none;
+  margin-left: auto;
+  color: var(--dsw-alias-label-caption);
+  font: var(--dsw-font-xxs-12);
+}
+
+.chevron,
+.openChevron {
+  flex: none;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.openChevron {
+  transform: rotate(180deg);
+}
+
+.body {
+  padding: 0 16px 12px 40px;
+}
+
+.explanation {
+  margin: 8px 0;
+  color: var(--dsw-alias-label-secondary);
+  font: var(--dsw-font-xxs-12);
+}
+
+/* 非目标轮次的原文：与官方 NoticeBody 同形（真实换行 + 240px 内滚动）。 */
+.content {
+  max-height: 240px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: var(--dsw-font-xxs-12);
+}
+
+/*
+ * `<pre>` 的 UA 样式是 `white-space: pre`，**优先级高于继承** —— 只在外层
+ * `.content` 上设 `pre-wrap` 传不进来，正文会横向溢出成一条长线（表现为一条
+ * 横向滚动条）。触发通知的正文该换行，所以这里显式覆盖。
+ */
+.text {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: var(--dsw-font-xxs-12);
+}
+
+.detail {
+  margin-top: 10px;
+}
+
+.pair {
+  margin: 0;
+}
+
+.key {
+  margin: 0 0 3px;
+  color: var(--dsw-alias-label-caption);
+  font: var(--dsw-font-xxs-12);
+}
+
+/* 目标原文：正常排版（不是 <pre> 的小字等宽），JSON 转义已在 model 侧还原。 */
+.value {
+  margin: 0 0 12px;
+  color: var(--dsw-alias-label-primary);
+  font: var(--dsw-font-xs-13);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+/* 指令段：默认收起，保留可查性而不是删掉。 */
+.instruction {
+  border-radius: 6px;
+  background: var(--dsw-alias-markdown-code-block);
+}
+
+.instructionSummary {
+  padding: 6px 10px;
+  color: var(--dsw-alias-label-secondary);
+  font: var(--dsw-font-xxs-12);
+  cursor: pointer;
+}
+
+.instructionText {
+  max-height: 200px;
+  margin: 0;
+  padding: 0 10px 8px;
+  overflow: auto;
+  color: var(--dsw-alias-label-tertiary);
+  font: var(--dsw-font-xxs-12);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    transition: none;
+  }
+}

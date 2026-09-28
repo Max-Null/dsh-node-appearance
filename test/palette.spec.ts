@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest'
 import {
-  buildCss, DEFAULT_COLORS, isCssColor, resolveColors, TOOL_CATEGORIES,
+  buildCss, DEFAULT_COLORS, isCssColor, PROCESS_ACTIVITIES, resolveColors, TOOL_CATEGORIES,
 } from '../src/client/palette.ts'
 
 describe('isCssColor', () => {
@@ -74,6 +74,28 @@ describe('buildCss', () => {
     expect(css).toContain(`[data-chat-flow-kind="context"] { --ncolor-accent: ${DEFAULT_COLORS.context}; }`)
   })
 
+  it('paints a collapsed Turn summary bar on its hairline, not with a rail', () => {
+    // Turn 级摘要条（「已完成工作 · 用时 35 秒」）在内核里是**整行宽的分节线**
+    // （`padding: 0` + 底部发丝线），不是块状行。套块状行的 rail 会紧贴文字，
+    // 而补偿用的 3px 内缩又让它与上下所有行错位（2026-09-29 用户反馈）。
+    // 所以它把类别色取在**内核本来就画的那条底线上**，不加轨、不内缩。
+    const css = buildCss({})
+    expect(css).toContain(`[data-turn-process]:not([data-open]) { --ncolor-accent: ${DEFAULT_COLORS.summary}; }`)
+    const rule = css.match(/\[data-turn-process\]:not\(\[data-open\]\) \{\n([^}]*)\}/)
+    expect(rule).not.toBeNull()
+    expect(rule?.[1]).toContain('border-bottom-color: var(--ncolor-accent);')
+    expect(rule?.[1]).toContain('color-mix(in srgb, var(--ncolor-accent) 8%, transparent)')
+    expect(rule?.[1]).not.toContain('box-shadow')
+    expect(rule?.[1]).not.toContain('padding-left')
+    // 成员展开时不涂：它们各自带色，容器再涂就是两层色块叠在一起。
+    expect(css).not.toContain('[data-turn-process] {')
+  })
+
+  it('follows a configured summary color', () => {
+    const css = buildCss({ colors: { summary: '#010203' } })
+    expect(css).toContain(`[data-turn-process]:not([data-open]) { --ncolor-accent: #010203; }`)
+  })
+
   it('emits the shared rail + wash paint rule with icon-safe padding', () => {
     const css = buildCss({})
     expect(css).toContain('box-shadow: inset 3px 0 0 var(--ncolor-accent);')
@@ -126,5 +148,80 @@ describe('buildCss', () => {
 
   it('handles undefined settings', () => {
     expect(buildCss(undefined)).toContain(`--ncolor-accent: ${DEFAULT_COLORS.search}`)
+  })
+})
+
+describe('step-process group headers', () => {
+  // 收起态的组头（「已读取文件并执行了命令」）是内核把一串工具调用折成的一行，
+  // 颜色取自内核在 data-process-activity 上给出的类别，而不是解析标题文本。
+  const collapsed = (activity?: string): string =>
+    `[data-step-process] [data-process-activity${activity === undefined ? '' : `="${activity}"`}][aria-expanded="false"]`
+
+  it('paints a collapsed header with its activity category color', () => {
+    const css = buildCss({})
+    for (const [activity, category] of Object.entries(PROCESS_ACTIVITIES)) {
+      expect(css).toContain(`${collapsed(activity)} { --ncolor-accent: ${DEFAULT_COLORS[category]}; }`)
+    }
+  })
+
+  it('maps code search to the file category, not the web search category', () => {
+    // 组头的 `search` 指 grep/glob（file 类别），`webSearch`/`webFetch` 才是联网。
+    // 两者混同会让「已搜索代码」与「已搜索网页」同色。
+    expect(PROCESS_ACTIVITIES.search).toBe('file')
+    expect(PROCESS_ACTIVITIES.webSearch).toBe('search')
+    expect(collapsed('search')).not.toBe(collapsed('webSearch'))
+  })
+
+  it('falls back to the other color for an activity this build does not know', () => {
+    // 内核新增类别时映射表不会报错（TypeScript 只保证本表的 key 全覆盖），
+    // 兜底让新类别仍有颜色，而不是让 --ncolor-accent 缺失、涂色声明整条失效。
+    expect(buildCss({})).toContain(`${collapsed()} { --ncolor-accent: ${DEFAULT_COLORS.other}; }`)
+  })
+
+  it('declares the general fallback before the mappings so mappings win the cascade', () => {
+    // `[attr]` 与 `[attr="value"]` 的特异性完全相等（各算一个属性选择器），
+    // 所以具名规则不是"压过"兜底，而是"后声明"赢。兜底一旦挪到后面，
+    // 所有组头都会变灰 —— 与 unlisted-tool 兜底同一机制、同一个坑。
+    const css = buildCss({})
+    const fallbackAt = css.indexOf(`${collapsed()} {`)
+    const namedAt = css.indexOf(`${collapsed('read')} {`)
+    expect(fallbackAt).toBeGreaterThanOrEqual(0)
+    expect(namedAt).toBeGreaterThan(fallbackAt)
+  })
+
+  it('follows configured category colors', () => {
+    // 组头复用既有 colors 配置，不引入新的设置字段。
+    const css = buildCss({ colors: { file: '#ff0000' } })
+    expect(css).toContain(`${collapsed('read')} { --ncolor-accent: #ff0000; }`)
+    expect(css).toContain(`${collapsed('commands')} { --ncolor-accent: ${DEFAULT_COLORS.execute}; }`)
+  })
+
+  it('keeps the collapsed header inside the shared rail + wash paint rule', () => {
+    const css = buildCss({})
+    const paintAt = css.indexOf('box-shadow: inset 3px 0 0 var(--ncolor-accent);')
+    expect(paintAt).toBeGreaterThanOrEqual(0)
+    // 涂色规则的联合选择器里必须含组头，否则颜色赋了也没人读。
+    const ruleHead = css.slice(0, paintAt)
+    expect(ruleHead).toContain(collapsed())
+  })
+
+  it('does not paint an expanded header and holds its position', () => {
+    const css = buildCss({})
+    const open = '[data-step-process] [data-process-activity][aria-expanded="true"]'
+    // 展开后成员行各自带色，组头让位；但内距要留着，否则开合时组头横移。
+    expect(css).toContain(`${open} { padding-left: 8px; }`)
+    // 只出现这一次：若它落进涂色联合选择器，就会出现第二次。
+    expect(css.split(open).length - 1).toBe(1)
+  })
+
+  it('gives the group header rail more air than a tool row, declared after the shared rule', () => {
+    // 组头以图标起头，共享的 3px 会让轨贴住图标（看着像一道杂线）。
+    // 覆盖必须排在共享涂色规则**之后** —— 两者同特异性，后写的赢；
+    // 挪到前面就会被共享规则的 3px 盖回去，且不会有任何报错。
+    const css = buildCss({})
+    const sharedAt = css.indexOf('box-shadow: inset 3px 0 0 var(--ncolor-accent);')
+    const headerPadAt = css.indexOf(`${collapsed()} { padding-left: 8px; }`)
+    expect(sharedAt).toBeGreaterThanOrEqual(0)
+    expect(headerPadAt).toBeGreaterThan(sharedAt)
   })
 })
