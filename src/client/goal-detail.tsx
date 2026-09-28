@@ -19,6 +19,7 @@ import {
   IconChevronDownOutlineMedium, IconChevronUpOutlineMedium, IconGoalOutlineMedium,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ReactNode } from 'react'
+import { objectiveLines } from './objective.ts'
 import css from './goal-detail.module.css'
 
 /** 投影里本卡渲染的字段（照 DSH 的 `GoalSnapshot` 声明为鸭子类型）。 */
@@ -109,7 +110,7 @@ export function GoalDetail({ useProjection }: GoalDetailProps) {
         </button>
         {!collapsed && (
           <dl className={css.detail}>
-            <Row label="目标">{goal.objective}</Row>
+            <Row label="目标">{objectiveLines(goal.objective)}</Row>
             <Row label="阶段">{PHASE_LABEL[goal.phase]}</Row>
             {goal.blockedReason !== undefined && (
               <Row label="阻塞">

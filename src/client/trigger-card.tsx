@@ -35,6 +35,7 @@ import {
   contentRuns, formatClock, goalRoundOf, turnTriggerDetails,
   type ContentRun, type GoalRound, type TriggerIcon, type TriggerNodeLike, type TriggerTranslate,
 } from './trigger-model.ts'
+import { objectiveLines } from './objective.ts'
 import css from './trigger-card.module.css'
 
 /** 本卡从 slot owner 收到的字段；其余 owner props 与本卡无关。 */
@@ -85,7 +86,7 @@ function GoalRoundBody({ goal }: { goal: GoalRound }) {
     <div className={css.detail}>
       <dl className={css.pair}>
         <dt className={css.key}>目标</dt>
-        <dd className={css.value} data-trigger-objective>{goal.objective}</dd>
+        <dd className={css.value} data-trigger-objective>{objectiveLines(goal.objective)}</dd>
       </dl>
       <details className={css.instruction}>
         <summary className={css.instructionSummary}>模型收到的指令</summary>

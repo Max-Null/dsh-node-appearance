@@ -122,12 +122,14 @@
   font: var(--dsw-font-xxs-12);
 }
 
-/* 目标原文：正常排版（不是 <pre> 的小字等宽），JSON 转义已在 model 侧还原。 */
+/* 目标原文：正常排版（不是 <pre> 的小字等宽），JSON 转义已在 model 侧还原。
+   `pre-wrap` 是给 `objectiveLines()` 插进来的分条换行用的。 */
 .value {
   margin: 0 0 12px;
   color: var(--dsw-alias-label-primary);
   font: var(--dsw-font-xs-13);
   line-height: 1.6;
+  white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
