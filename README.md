@@ -24,31 +24,31 @@ This plugin belongs to the **`@max-null/*` family** — a set of plugins that to
 
 | 会话节点着色 | 设置卡片 |
 |---|---|
-| ![会话节点着色](docs/shots/会话面板截图.png) | ![设置卡片](docs/shots/设置卡片.png) |
+| ![会话节点着色(https://raw.githubusercontent.com/Max-Null/dsh-node-appearance/main/docs/shots/会话面板截图.png) | ![设置卡片(https://raw.githubusercontent.com/Max-Null/dsh-node-appearance/main/docs/shots/设置卡片.png) |
 
 | 提问卡片 | 目标条（折叠 / 展开） |
 |---|---|
-| ![提问卡片](docs/shots/提问卡片截图.png) | ![目标条折叠](docs/shots/目标详情-折叠.png) ![目标条展开](docs/shots/目标详情-展开.png) |
+| ![提问卡片(https://raw.githubusercontent.com/Max-Null/dsh-node-appearance/main/docs/shots/提问卡片截图.png) | ![目标条折叠(https://raw.githubusercontent.com/Max-Null/dsh-node-appearance/main/docs/shots/目标详情-折叠.png) ![目标条展开(https://raw.githubusercontent.com/Max-Null/dsh-node-appearance/main/docs/shots/目标详情-展开.png) |
 
 | 交付文件行（折叠） |
 |---|
-| ![交付行折叠](docs/shots/交付行-折叠.png) |
+| ![交付行折叠(https://raw.githubusercontent.com/Max-Null/dsh-node-appearance/main/docs/shots/交付行-折叠.png) |
 
 | 交付文件行（展开 · 青＝交付、绿＝写入） |
 |---|
-| ![交付行展开](docs/shots/交付行-展开.png) |
+| ![交付行展开(https://raw.githubusercontent.com/Max-Null/dsh-node-appearance/main/docs/shots/交付行-展开.png) |
 
 | 折叠摘要条（收起 · 组头按类别取色） | 折叠摘要条（展开 · 成员行各自带色） |
 |---|---|
-| ![组头收起](docs/shots/组头着色-收起.png) | ![组头展开](docs/shots/组头着色-展开.png) |
+| ![组头收起(https://raw.githubusercontent.com/Max-Null/dsh-node-appearance/main/docs/shots/组头着色-收起.png) | ![组头展开(https://raw.githubusercontent.com/Max-Null/dsh-node-appearance/main/docs/shots/组头着色-展开.png) |
 
 | Turn 级摘要条（收起 · 中性色 `summary`） |
 |---|
-| ![Turn 摘要条收起](docs/shots/Turn摘要条-收起.png) |
+| ![Turn 摘要条收起(https://raw.githubusercontent.com/Max-Null/dsh-node-appearance/main/docs/shots/Turn摘要条-收起.png) |
 
 | 触发通知卡（收起 · 带轮次徽标） | 触发通知卡（展开 · 字段化） |
 |---|---|
-| ![触发卡收起](docs/shots/触发卡-收起.png) | ![触发卡展开](docs/shots/触发卡-展开.png) |
+| ![触发卡收起(https://raw.githubusercontent.com/Max-Null/dsh-node-appearance/main/docs/shots/触发卡-收起.png) | ![触发卡展开(https://raw.githubusercontent.com/Max-Null/dsh-node-appearance/main/docs/shots/触发卡-展开.png) |
 
 ## 安装
 
@@ -146,10 +146,10 @@ npm run build       # tsc 类型 + tsdown（lib/index.js + lib/client.js）
 
 ## 文档
 
-- [决策记录](docs/决策/2026-08-17-节点外观插件-独立插件决策.md)
-- [设计方案](docs/设计/DSH节点外观插件-设计方案.md)
-- [触发通知卡结构化设计](docs/设计/2026-09-29-目标轮次触发卡结构化设计.md)
-- [验证记录](docs/验证记录.md)（L2 实机测试留痕：环境 / 判据 / 读数 / 踩过的坑）
+- [决策记录(https://github.com/Max-Null/dsh-node-appearance/blob/main/docs/决策/2026-08-17-节点外观插件-独立插件决策.md)
+- [设计方案(https://github.com/Max-Null/dsh-node-appearance/blob/main/docs/设计/DSH节点外观插件-设计方案.md)
+- [触发通知卡结构化设计(https://github.com/Max-Null/dsh-node-appearance/blob/main/docs/设计/2026-09-29-目标轮次触发卡结构化设计.md)
+- [验证记录(https://github.com/Max-Null/dsh-node-appearance/blob/main/docs/验证记录.md)（L2 实机测试留痕：环境 / 判据 / 读数 / 踩过的坑）
 
 ## SSID 系列
 

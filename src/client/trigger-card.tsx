@@ -103,7 +103,8 @@ function GoalRoundBody({ goal }: { goal: GoalRound }) {
  */
 function PlainBody({ runs, t }: { runs: readonly ContentRun[]; t: TriggerTranslate }): ReactNode {
   return runs.map((run, index) => (run.kind === 'text'
-    ? <pre key={index} className={css.text} data-context-text>{run.text}</pre>
+    // 空文本块不渲染 —— 官方 `ModelFacingContent` 同样跳过 `''`，不然会多出一个空 `<pre>`。
+    ? run.text !== '' && <pre key={index} className={css.text} data-context-text>{run.text}</pre>
     : (
       <JsonBlock
         key={index}
