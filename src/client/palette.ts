@@ -23,6 +23,8 @@ export type NodeAppearanceColors = Record<NodeCategory, string>
 export interface NodeAppearanceSettings {
   /** Show assistant reasoning blocks as Think rows; false hides them. */
   showThinking?: boolean | undefined
+  /** Show the injected-context rows this plugin restores; false hides them. */
+  showContextInjection?: boolean | undefined
   /** Per-category accent colors; missing keys fall back to defaults. */
   colors?: Partial<NodeAppearanceColors> | undefined
   /** Per-tool accent overrides keyed by wire tool name. */
@@ -105,6 +107,14 @@ const COMMAND_ROW = '[data-chat-flow-kind="command"]'
 const THINK_ROW = '[data-variant="think"]'
 /** Selector of the injected-context row (the flow-item wrapper). */
 const CONTEXT_ROW = '[data-chat-flow-kind="context"]'
+/**
+ * Selector of the injected-context row **restored by this plugin**.
+ *
+ * 0.2.0 起 ui-chat 的 `isVisibleChatNode()` 按 kind 排除 `context`，官方那条
+ * 行不再渲染；本插件用自有 kind 重新接住同一批事件（见 `context-injection.ts`）。
+ * 两个 kind 都要着色，否则恢复出来的行没有配色。
+ */
+const INJECTION_ROW = '[data-chat-flow-kind="context-injection"]'
 /** Selector of a settled tool-result row (rc.8: tool results render as their own row). */
 const TOOL_RESULT_ROW = '[data-chat-flow-kind="tool-result"]'
 /**
@@ -166,7 +176,7 @@ const PROCESS_HEADER_OPEN = '[data-step-process] [data-process-activity][aria-ex
  * with a matching padding-left so the rail never covers the row's leading icon.
  */
 const ACCENTED_ROWS = [
-  TOOL_ROW_ROOT, COMMAND_ROW, THINK_ROW, CONTEXT_ROW, TOOL_RESULT_ROW, collapsedProcessHeader(),
+  TOOL_ROW_ROOT, COMMAND_ROW, THINK_ROW, CONTEXT_ROW, INJECTION_ROW, TOOL_RESULT_ROW, collapsedProcessHeader(),
 ].join(',\n')
 
 /**
@@ -239,6 +249,7 @@ export function buildCss(settings: NodeAppearanceSettings | undefined): string {
   lines.push(`${COMMAND_ROW} { --ncolor-accent: ${colors.command}; }`)
   lines.push(`${THINK_ROW} { --ncolor-accent: ${colors.thinking}; }`)
   lines.push(`${CONTEXT_ROW} { --ncolor-accent: ${colors.context}; }`)
+  lines.push(`${INJECTION_ROW} { --ncolor-accent: ${colors.context}; }`)
   lines.push(`${TOOL_RESULT_ROW} { --ncolor-accent: ${colors.file}; }`)
   lines.push(`${TURN_SUMMARY} { --ncolor-accent: ${colors.summary}; }`)
 
@@ -303,6 +314,13 @@ export function buildCss(settings: NodeAppearanceSettings | undefined): string {
   -webkit-mask: url("${STEERING_ICON}") center / contain no-repeat;
   mask: url("${STEERING_ICON}") center / contain no-repeat;
 }`)
+
+  // Visibility switch for the restored injection rows. 选 CSS 而不是「让
+  // Definition 不产出节点」：后者要 Definition 读配置并触发引擎重跑，而
+  // `showThinking` 已经确立了「前端隐藏」这条先例，两处开关行为一致更好预期。
+  if (settings?.showContextInjection === false) {
+    lines.push(`${INJECTION_ROW} { display: none !important; }`)
+  }
 
   // Visibility switch: hide Think rows entirely on the frontend. `!important`
   // outranks the module stylesheet's `.root { display: flex }` (same

@@ -1,0 +1,64 @@
+/*
+ * 上下文注入行的样式。
+ *
+ * 外壳交给 `DisclosureRow`（官方同一张折叠行），这里只给展开体与折叠头右侧的
+ * 来源标签。颜色一律走 `--dsw-*` 语义 token，不写颜色字面量（DSH 客户端样式
+ * 规范）。
+ */
+
+.root {
+  min-width: 0;
+}
+
+.chevron {
+  flex: none;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+/* 折叠头里的分隔点：aria-hidden，可读名只由标题与来源名构成。 */
+.sep {
+  flex: none;
+  width: 3px;
+  height: 3px;
+  margin: 0 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.4;
+}
+
+.source {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--dsw-alias-label-tertiary);
+  font: var(--dsw-font-xxs-12);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * 展开体不限高、不内滚 —— 滚动只留给会话消息流那一层。
+ *
+ * 初版照官方 `ContextInjectionRow` 写了 `max-height: 280px; overflow: auto`
+ * （官方是 141px，为的是对齐 Figma 的行节奏）。但注入正文动辄上千字：展开后
+ * 块内一条滚动条、会话区一条，读一次要滚两次，用户把它当缺陷报了上来。
+ * 正文的价值就是一次看全，折叠态本来也不占位，所以把高度交给内容自己。
+ */
+.body {
+  box-sizing: border-box;
+}
+
+/*
+ * `<pre>` 的 UA 样式是 `white-space: pre`，优先级高于继承 —— 只在外层设
+ * `pre-wrap` 传不进来，正文会横向溢出成一条长线。注入正文该换行，显式覆盖。
+ */
+.text {
+  margin: 0 0 6px;
+  color: var(--dsw-alias-label-secondary);
+  font: var(--dsw-font-xxs-12);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.text:last-child {
+  margin-bottom: 0;
+}

@@ -112,6 +112,21 @@ describe('buildCss', () => {
     expect(buildCss({ showThinking: false })).toContain(`[data-variant="think"] { display: none !important; }`)
   })
 
+  it('hides the restored injection rows only when showContextInjection is false', () => {
+    expect(buildCss({})).not.toContain('context-injection"] { display: none')
+    expect(buildCss({ showContextInjection: true })).not.toContain('context-injection"] { display: none')
+    expect(buildCss({ showContextInjection: false }))
+      .toContain(`[data-chat-flow-kind="context-injection"] { display: none !important; }`)
+  })
+
+  it('paints the official and the restored injection rows with one context color', () => {
+    // 0.2.0 起官方那条 context 行不再渲染，配色要靠本插件自己的 kind 接住；
+    // 两个选择器同色，恢复出来的行才与它在同一条视觉轴上。
+    const css = buildCss({})
+    expect(css).toContain(`[data-chat-flow-kind="context"] { --ncolor-accent: ${DEFAULT_COLORS.context}; }`)
+    expect(css).toContain(`[data-chat-flow-kind="context-injection"] { --ncolor-accent: ${DEFAULT_COLORS.context}; }`)
+  })
+
   it('gives explicit tool overrides priority over category colors', () => {
     const css = buildCss({ toolColors: { web_search: '#123456' } })
     expect(css).toContain(`[data-tool="web_search"] { --ncolor-accent: #123456; }`)

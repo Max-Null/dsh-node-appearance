@@ -51,6 +51,11 @@ export interface NodeAppearanceColors {
 export interface Config {
   /** Show assistant reasoning blocks as Think rows; false hides them on the frontend. */
   showThinking: Volatile<boolean>
+  /**
+   * Restore the injected-context rows DSH 0.2.0 stopped rendering; false leaves
+   * them out. 见 `src/client/context-injection.ts` 的由来说明。
+   */
+  showContextInjection: Volatile<boolean>
   /** Per-category accent colors. */
   colors: Volatile<NodeAppearanceColors>
   /** Per-tool accent overrides keyed by wire tool name. */
@@ -80,6 +85,7 @@ export const DEFAULT_COLORS: NodeAppearanceColors = {
 // （`web-search-deepseek/src/index.ts`）同样让 TS 自行推导。
 export const Config = z.object({
   showThinking: z.boolean().default(true).volatile(),
+  showContextInjection: z.boolean().default(true).volatile(),
   colors: z.object({
     search: z.string().default(DEFAULT_COLORS.search),
     agent: z.string().default(DEFAULT_COLORS.agent),

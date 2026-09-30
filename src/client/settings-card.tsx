@@ -36,6 +36,8 @@ export interface NodeAppearanceRowFace {
   apply(value: NodeAppearanceSettings): Promise<void>
   /** Write the Think visibility switch. */
   setShowThinking(show: boolean): void
+  /** Write the restored injected-context rows visibility switch. */
+  setShowContextInjection(show: boolean): void
   /** Merge one category color into the palette section. */
   setCategoryColor(category: NodeCategory, color: string): void
   /** Merge one tool override into the toolColors section. */
@@ -80,6 +82,8 @@ const COPY = {
   loading: '配置加载中…',
   showThinking: '显示思考过程',
   showThinkingHint: '关闭后会话中的 Think 思考行隐藏',
+  showContextInjection: '显示上下文注入',
+  showContextInjectionHint: '0.2.0 起官方隐藏了注入行，本插件把它们画回来；关闭即回到官方行为',
   toolColors: '工具颜色覆盖（可选）',
   addTool: '添加',
   removeTool: '删除',
@@ -88,6 +92,7 @@ const COPY = {
 /** The shipped defaults, one face call away from any custom palette. */
 const INITIAL_SETTINGS: NodeAppearanceSettings = {
   showThinking: true,
+  showContextInjection: true,
   colors: DEFAULT_COLORS,
   toolColors: {},
 }
@@ -97,7 +102,7 @@ const INITIAL_SETTINGS: NodeAppearanceSettings = {
  * @param props - the injected scope snapshot hook, its write actions.
  * @returns the card, matching the official plugin-card chrome.
  */
-export function NodeAppearanceRow({ useNodeAppearance, apply, setShowThinking, setCategoryColor, setToolColor, removeToolColor }: NodeAppearanceRowProps) {
+export function NodeAppearanceRow({ useNodeAppearance, apply, setShowThinking, setShowContextInjection, setCategoryColor, setToolColor, removeToolColor }: NodeAppearanceRowProps) {
   // 默认展开：卡片是插件页上唯一承载本插件设置的位置，折叠态会让用户以为
   // 「设置不见了」（2026-09-26 用户反馈）。折叠仍可手动收起。
   const [open, setOpen] = useState(true)
@@ -110,6 +115,7 @@ export function NodeAppearanceRow({ useNodeAppearance, apply, setShowThinking, s
   const colors = resolveColors(served)
   const toolColors = served.toolColors ?? {}
   const showThinking = served.showThinking ?? true
+  const showContextInjection = served.showContextInjection ?? true
   const disabled = snapshot.writable === false
   const unavailable = snapshot.status !== 'ready'
 
@@ -171,6 +177,19 @@ export function NodeAppearanceRow({ useNodeAppearance, apply, setShowThinking, s
                 type="button"
                 aria-pressed={showThinking}
                 onClick={() => { setShowThinking(!showThinking) }}
+              >
+                <span className={css.knob} />
+              </button>
+            </div>
+            <div className={css.row}>
+              <label className={css.rowLabel} htmlFor="node-appearance-show-context">{COPY.showContextInjection}</label>
+              <span className={css.rowHint}>{COPY.showContextInjectionHint}</span>
+              <button
+                id="node-appearance-show-context"
+                className={css.switch + (showContextInjection ? ' ' + css.on : '')}
+                type="button"
+                aria-pressed={showContextInjection}
+                onClick={() => { setShowContextInjection(!showContextInjection) }}
               >
                 <span className={css.knob} />
               </button>

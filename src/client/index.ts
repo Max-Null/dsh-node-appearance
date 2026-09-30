@@ -20,6 +20,8 @@ import { AskQuestionRow } from './ask-card.tsx'
 import { DeliverableRow } from './deliverable-row.tsx'
 import { GoalDetail } from './goal-detail.tsx'
 import { TriggerCard } from './trigger-card.tsx'
+import { CONTEXT_INJECTION_KIND, contextInjectionDefinition } from './context-injection.ts'
+import { ContextInjectionCard } from './context-injection-card.tsx'
 
 export const inject = ['slots', 'connection', 'remote', 'configForms']
 
@@ -70,6 +72,7 @@ export function apply(ctx: ClientContext): void {
       ] as never)
     },
     setShowThinking: (show) => { void form.set('showThinking', show) },
+    setShowContextInjection: (show) => { void form.set('showContextInjection', show) },
     setCategoryColor: (category, color) => {
       const value = form.getSnapshot().value
       void form.mutate([
@@ -173,4 +176,38 @@ export function apply(ctx: ClientContext): void {
     // 它，插件不新造 locale 命名空间。
     locale: 'chat',
   } as never, TriggerCard as never))
+
+  // 恢复被 0.2.0 滤掉的上下文注入行。
+  //
+  // 这里**不是接管**：ui-chat 的 `isVisibleChatNode()` 按 kind 排除 `context`，
+  // 官方那条节点根本走不到渲染（slot 分发轮不到它），遮蔽同一个 key 没有意义。
+  // 改为注册一条**自有 kind** 的 Definition 去接住同一批 `user/message`，再在
+  // 同一个 slot 上以该 kind 注册渲染器——`ChatNodeDataMap` 是 merge-extensible
+  // 的（注释原文即「业务模块贡献的渲染 kind」），这是官方留的口子。
+  //
+  // 走 `uiConversation` 服务而不是插件级 `inject` 声明它：服务缺席时只让这一个
+  // 功能不生效，不该把整个插件拖成 pending —— 配色与其余卡片不必陪着消失。
+  // 类型期放宽同前几处：`ConversationNodeDefinition` 与 `uiConversation` 的
+  // Context 增强属于官方 @deepseek-ai/dsh-client-ui-conversation，本插件不为此
+  // 引入依赖。
+  const serviceContext = ctx as unknown as {
+    inject(names: readonly string[], callback: (scoped: ClientContext) => void): unknown
+  }
+  serviceContext.inject(['uiConversation'], (scoped) => {
+    const conversation = (scoped as unknown as {
+      uiConversation: { events: { register(definition: unknown): () => void } }
+    }).uiConversation
+    scoped.effect(
+      () => conversation.events.register(contextInjectionDefinition()),
+      'dsh-node-appearance: restore injected-context rows',
+    )
+  })
+
+  ctx.slots.inject('conversation.chat.node' as never, () => ctx.slots.register({
+    name: 'conversation.chat.node',
+    key: CONTEXT_INJECTION_KIND,
+    // 复用官方 chat 字典：`message.contextInjection` / `message.contextRecall`
+    // 两条文案都还在里面（0.2.0 只是不用它们画行了，key 没删）。
+    locale: 'chat',
+  } as never, ContextInjectionCard as never))
 }
