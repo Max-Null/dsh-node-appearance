@@ -19,6 +19,7 @@ This plugin belongs to the **`@max-null/*` family** — a set of plugins that to
 - **交付文件行**：`present` 的行改为折叠态只报「首个文件名 + 数量」，展开后逐文件成行（扩展名徽标 + 文件名 + 所在目录），并在结果文本上方标注行数。官方折叠行把全部文件名逗号拼成一行（`fileNames()` 的 `.join(', ')`），多文件时读不完，也看不出这一轮交付了几个。配色单列 `deliver` 类别（默认青蓝 `#06b6d4`）——本轮生成文件的那些行与交付行常常同屏出现，与 `file`（`read`/`write`）共用绿色会分不清谁是谁。
 - **思考过程显示开关**：关闭后 Think 思考行前端隐藏（`display: none`），配置项与配色在同一张设置卡片里。
 - **上下文注入行（把 0.2.0 拿掉的画回来）**：DSH 从 `dsh-v0.1.7-alpha.1` 起，ui-chat 的 `isVisibleChatNode()` 把**普通上下文注入行**整个从对话面板滤掉——记忆快照、`AGENTS.md`、技能目录、时间快照这些全在其中，只放行含工具增删的 context 行。本插件用**自有 kind**（`context-injection`）接住同一批 `user/message` 再画回来：形态对齐官方 `ContextInjectionRow`（同一张折叠行、同一个 `message.contextInjection` 文案），配色沿用 `context` 类别。**为什么不是接管**：官方那条节点仍在生成、只是不再渲染，遮蔽同一个 key 根本轮不到它——改走 `ChatNodeDataMap` 这个 merge-extensible 的渲染 kind 注册口。由设置里的「显示上下文注入」开关控制，默认开；展开体不限高，滚动只留给会话消息流那一层。
+- **技能行（`skill`）**：接管内核的「加载技能」行。官方展开体是一张「说明」卡，里面用 `<pre>` 直接铺 `skill` 工具返回的**规范渲染块**——`<skill_content>` 套 `<skill_resources>` 再套 `<skill_instructions>`，那层 XML 壳对人不构成信息，却把技能正文夹在中间。接管后正文直出（壳在解析时丢掉），**资源指引单独成节并默认收起**（它解释技能去哪些路径找素材，属于按需查看的背景，不是正文）；`查看` 入口、四态、状态词、技能名全部保留。**结构不符时原样退回官方形态**——绝不猜，也不把展开体渲染成空白。
 - **即时生效**：设置改动立即重绘会话，并持久化到 DSH 用户设置文档（`$DSH_HOME/settings.yaml`）。
 
 ## 截图
@@ -58,6 +59,10 @@ This plugin belongs to the **`@max-null/*` family** — a set of plugins that to
 | 上下文注入行（0.2.0 起官方隐藏，本插件画回来 · 展开态） |
 |---|
 | ![上下文注入行](https://raw.githubusercontent.com/Max-Null/dsh-node-appearance/main/docs/shots/上下文注入行-展开.png) |
+
+| 技能行（展开 · 正文直出，XML 壳已剥） |
+|---|
+| ![技能行](https://raw.githubusercontent.com/Max-Null/dsh-node-appearance/main/docs/shots/技能行-展开.png) |
 
 ## 安装
 
@@ -131,6 +136,7 @@ node-appearance:
 - 交付文件行同样是**接管**：官方 ui-deliverables 在 `tool.call.toolview` 的 `present` key 上有一条 priority 0 的注册，插件以同样的 `priority: -1` 遮蔽它。字段取用面照官方 `PresentRow`（结算前读 `block.argsRaw`、结算后读 `block.call.argsRaw`，半截 JSON 原样显示参数文本而不是当成零个文件），行外壳与提问卡同一套基线，locale 文案复用官方 `deliverables` 字典（`row.title` / `row.ok` / `row.inspect` …）。派生逻辑在纯函数 `deliverable-model.ts` 里，组件只做 JSX。
 - 目标详情折叠条是**并列追加**而非接管：`conversation.input.dock` 是 list 槽（官方占 `todo` order 0 / `goal` order 10 / `queue` order 20），插件以 `order: 11` 紧随官方目标条追加自己的条目，只读 `useProjection('goal')`。官方的 edit/pause/resume/clear 是 ui-goal 的注册者私有注入面（四个 Remote 动词 + 一个带竞态防护的 activation 订阅源），接管它们等于在本插件里再养一套会写会话数据的 RPC 客户端。
 - 触发通知卡同样是**接管**：`conversation.chat.node` 是 keyed slot，插件在 `turn-trigger` key 上以 `priority: -1` 遮蔽官方的 `TurnTriggerNodeView`。**遮蔽是全 key 的** —— 全部触发来源都会走插件组件，所以 kind → 标题/图标映射在 `trigger-model.ts` 里逐条复刻了官方那一份，非目标轮次的来源按官方同构渲染。派生（`<goal_round>` 解析、时间格式）全在纯函数里，组件只做 JSX；目标轮次提示词的解析是**全有或全无**，结构不符即整卡退回「原文 + 等宽显示」的等价形态。
+- 技能行**也是接管**：ui-skill 在 `tool.call.toolview` 的 `skill` key 上有一条 priority 0 的注册，插件以 priority -1 遮蔽它（同提问卡与交付行）。四态、状态词、技能名、`查看` 入口与 `data-tool="skill"` / `data-state` 锚点逐项保留，只有展开体换了实现：`<skill_content>` / `<skill_resources>` / `<skill_instructions>` 三层壳在 `skill-model.ts` 里按**逐行对帧**解析掉——不用宽松正则，因为正文里出现 `</skill_instructions>` 这类字面量是允许的（官方测试就带这种用例）——正文直出、资源指引另起一节默认收起；**形状不符则原样铺回结果原文**，与官方形态等价。
 - 上下文注入行**不是接管，是补位**：官方那条 `context` 节点仍由 ui-chat 的 `messageDefinition` 生成，只是被 `isVisibleChatNode()` 滤掉了，所以遮蔽 `context` 这个 key 没有意义。插件改为注册一条**自有 kind**（`context-injection`）的 `ConversationNodeDefinition`（`ctx.uiConversation.events.register`）接住同一批 `user/message`，再在 `conversation.chat.node` 上以该 kind 注册渲染器 —— `ChatNodeDataMap` 是 merge-extensible 的（注释原文即「业务模块贡献的渲染 kind」），这是官方留的注册口。事件判定与 `producer` / `form` 投影复刻自 `@deepseek-ai/dsh-session/surface` 与 ui-chat 的 `conversation-nodes/event-projection.ts`（浏览器半边不能值导入其他包），派生全在 `context-injection-model.ts` 的纯函数里。
 
 ## 已知限制

@@ -22,6 +22,7 @@ import { GoalDetail } from './goal-detail.tsx'
 import { TriggerCard } from './trigger-card.tsx'
 import { CONTEXT_INJECTION_KIND, contextInjectionDefinition } from './context-injection.ts'
 import { ContextInjectionCard } from './context-injection-card.tsx'
+import { SkillRow } from './skill-row.tsx'
 
 export const inject = ['slots', 'connection', 'remote', 'configForms']
 
@@ -140,6 +141,23 @@ export function apply(ctx: ClientContext): void {
     // 已中断 / 查看调用」全部取自它，插件不新造 locale 命名空间。
     locale: 'deliverables',
   } as never, DeliverableRow as never))
+
+  // 接管官方技能行。姿势与理由同交付行：ui-skill 在 `tool.call.toolview` 的
+  // `skill` key 上有一条 priority 0 的注册，keyed cell 只渲染最低 priority 的条目，
+  // priority -1 因此遮蔽它。
+  //
+  // 接管的唯一原因：官方展开体把 `renderSkillContent` 的规范块整段铺进 `<pre>`
+  // —— `<skill_content>` 套 `<skill_resources>` 再套 `<skill_instructions>`，
+  // 那层 XML 壳对人不构成信息，却把技能正文夹在中间（详见 skill-row.tsx）。
+  ctx.slots.inject('tool.call.toolview' as never, () => ctx.slots.register({
+    name: 'tool.call.toolview',
+    key: 'skill',
+    priority: -1,
+    // 复用官方 skill 字典：「加载技能 / 正在加载 skill / 准备加载技能 /
+    // skill 加载失败 / skill 加载已中止 / 说明 / 查看」全部取自它，
+    // 插件不新造 locale 命名空间（「资源」一节是本插件自有的直写中文）。
+    locale: 'skill',
+  } as never, SkillRow as never))
 
   // 目标详情折叠条：挂进输入框上方的 `conversation.input.dock`（list 槽，
   // 不同 id 各自成格、并列渲染），order 11 紧随官方 ui-goal 的 order 10 ——

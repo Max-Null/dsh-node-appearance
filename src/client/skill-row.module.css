@@ -1,0 +1,172 @@
+/*
+ * 技能行样式。
+ *
+ * 分两层：折叠行外壳逐项对齐 ui-tool 的 ToolRow.module.css（24px 行高、2px 分隔点、
+ * 13px 次级摘要、running 扫光、hover 才现的 Inspect 胶囊）—— 与同插件的提问卡、
+ * 交付行同一套基线，三个接管行看不出是三家实现；展开体是本插件的设计：技能正文
+ * 直出（剥掉 `<skill_content>` 骨架），资源指引单独成节并默认收起。
+ *
+ * 官方展开体把规范渲染块（三层 XML 壳）整段铺进 `<pre>`，正文被夹在中间；这里只留
+ * 正文，壳在 skill-model.ts 解析时就丢掉。**不限高、不做内部滚动** —— 与交付行、
+ * 上下文注入行同一取径：要读的内容交给会话流去滚（内层滚动条与会话流叠成两层，
+ * 用户报过一次，别再犯）。
+ *
+ * 颜色一律 DSH 语义 token，深浅主题自动适配。
+ */
+
+.root {
+  --skill-accent: var(--ncolor-accent, #64748b);
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  position: relative; /* running 扫光的锚点 */
+  overflow: hidden;
+}
+
+/* 运行中的扫光：与官方工具行同一条动画与同一条渐变。 */
+.root[data-state='running'] .row::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 300px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--dsw-alias-bg-base) 60%, transparent) 55%,
+    transparent 100%
+  );
+  animation: skill-row-sweep 2.6s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes skill-row-sweep {
+  0% { left: -300px; }
+  90%, 100% { left: 100%; }
+}
+
+.leading {
+  flex-shrink: 0;
+}
+
+.chevron {
+  color: var(--dsw-alias-label-secondary);
+}
+
+.title {
+  font-weight: 400;
+}
+
+.sep {
+  flex: none;
+  width: 2px;
+  height: 2px;
+  border-radius: 1px;
+  margin: 0 8px;
+  background: var(--dsw-alias-label-caption);
+}
+
+.summary {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: var(--dsh-content-font-size-secondary, 13px);
+  line-height: calc(24px + var(--dsh-content-font-delta, 0px));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bodyWrap {
+  display: flex;
+  flex-direction: column;
+  padding: 2px 0 2px 4px;
+}
+
+/* ---------- 展开体 ---------- */
+
+/* 说明卡：沿用官方 SkillRow 的浅底块与标题行，只是里面的内容不再是 XML 壳。 */
+.instructionsCard {
+  margin-top: 4px;
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-layer-1);
+}
+
+.instructionsHeader {
+  padding: 8px 12px 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.instructions {
+  margin: 0;
+  padding: 6px 12px 12px;
+  color: var(--dsw-alias-label-secondary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.instructions[data-error] {
+  color: var(--dsw-alias-label-error, var(--dsw-alias-label-secondary));
+}
+
+/* 资源指引：默认收起 —— 它解释技能去哪找素材，属于按需查看的背景，不是正文。 */
+.resources {
+  margin-top: 6px;
+  border-radius: 6px;
+  background: var(--dsw-alias-markdown-code-block);
+}
+
+.resourcesSummary {
+  padding: 6px 10px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  line-height: 16px;
+  cursor: pointer;
+}
+
+.resourcesText {
+  margin: 0;
+  padding: 0 10px 8px;
+  color: var(--dsw-alias-label-tertiary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+  line-height: 16px;
+}
+
+/* Inspect 胶囊：与官方工具行同款（hover 才现，键盘可聚焦）。 */
+.inspectButton {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 4px;
+  margin: 8px 0 2px;
+  padding: 2px 8px;
+  border: 0.5px solid var(--dsw-alias-border-l3);
+  border-radius: 999px;
+  corner-shape: round;
+  background: var(--dsw-alias-bg-base);
+  color: var(--dsw-alias-label-secondary);
+  font-size: 11px;
+  line-height: 16px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 100ms ease;
+}
+
+.root:hover .inspectButton,
+.inspectButton:focus-visible {
+  opacity: 1;
+}
+
+.inspectButton:hover {
+  background: var(--dsw-alias-interactive-bg-hover-solid);
+  color: var(--dsw-alias-label-primary);
+}
