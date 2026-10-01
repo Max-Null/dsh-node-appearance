@@ -186,7 +186,7 @@ const PROCESS_HEADER_OPEN = '[data-step-process] [data-process-activity][aria-ex
  * with a matching padding-left so the rail never covers the row's leading icon.
  */
 const ACCENTED_ROWS = [
-  TOOL_ROW_ROOT, COMMAND_ROW, THINK_ROW, CONTEXT_ROW, INJECTION_ROW, TOOL_RESULT_ROW, collapsedProcessHeader(),
+  TOOL_ROW_ROOT, COMMAND_ROW, THINK_ROW, CONTEXT_ROW, INJECTION_ROW, SYSTEM_PROMPT_ROW, TOOL_RESULT_ROW, collapsedProcessHeader(),
 ].join(',\n')
 
 /**
@@ -260,6 +260,9 @@ export function buildCss(settings: NodeAppearanceSettings | undefined): string {
   lines.push(`${THINK_ROW} { --ncolor-accent: ${colors.thinking}; }`)
   lines.push(`${CONTEXT_ROW} { --ncolor-accent: ${colors.context}; }`)
   lines.push(`${INJECTION_ROW} { --ncolor-accent: ${colors.context}; }`)
+  // 系统提示词卡与注入行同族（都是模型实际看到的上下文），共用 context 色：
+  // 语义上它们是同一件事的两种来源，硬分两色就得先解释「为什么不一样」。
+  lines.push(`${SYSTEM_PROMPT_ROW} { --ncolor-accent: ${colors.context}; }`)
   lines.push(`${TOOL_RESULT_ROW} { --ncolor-accent: ${colors.file}; }`)
   lines.push(`${TURN_SUMMARY} { --ncolor-accent: ${colors.summary}; }`)
 
