@@ -25,6 +25,8 @@ export interface NodeAppearanceSettings {
   showThinking?: boolean | undefined
   /** Show the injected-context rows this plugin restores; false hides them. */
   showContextInjection?: boolean | undefined
+  /** Show the system-prompt cards this plugin restores; false hides them. */
+  showSystemPrompt?: boolean | undefined
   /** Per-category accent colors; missing keys fall back to defaults. */
   colors?: Partial<NodeAppearanceColors> | undefined
   /** Per-tool accent overrides keyed by wire tool name. */
@@ -115,6 +117,14 @@ const CONTEXT_ROW = '[data-chat-flow-kind="context"]'
  * 两个 kind 都要着色，否则恢复出来的行没有配色。
  */
 const INJECTION_ROW = '[data-chat-flow-kind="context-injection"]'
+/**
+ * Selector of the system-prompt card **restored by this plugin**.
+ *
+ * 同一个由来的另一半：`isVisibleChatNode()` 也排除 `system-prompt`，官方那两张卡
+ * （`system-message` / `request-prompt` 两条 Definition）仍在生成但不渲染。
+ * 官方那张行本就没有类别配色（不在 ACCENTED_ROWS 里），这里同样只接开关。
+ */
+const SYSTEM_PROMPT_ROW = '[data-chat-flow-kind="system-prompt-notice"]'
 /** Selector of a settled tool-result row (rc.8: tool results render as their own row). */
 const TOOL_RESULT_ROW = '[data-chat-flow-kind="tool-result"]'
 /**
@@ -320,6 +330,11 @@ export function buildCss(settings: NodeAppearanceSettings | undefined): string {
   // `showThinking` 已经确立了「前端隐藏」这条先例，两处开关行为一致更好预期。
   if (settings?.showContextInjection === false) {
     lines.push(`${INJECTION_ROW} { display: none !important; }`)
+  }
+
+  // 同一开关形态的第三个：恢复出来的系统提示词卡。
+  if (settings?.showSystemPrompt === false) {
+    lines.push(`${SYSTEM_PROMPT_ROW} { display: none !important; }`)
   }
 
   // Visibility switch: hide Think rows entirely on the frontend. `!important`

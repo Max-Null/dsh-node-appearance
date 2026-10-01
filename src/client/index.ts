@@ -23,6 +23,8 @@ import { TriggerCard } from './trigger-card.tsx'
 import { CONTEXT_INJECTION_KIND, contextInjectionDefinition } from './context-injection.ts'
 import { ContextInjectionCard } from './context-injection-card.tsx'
 import { SkillRow } from './skill-row.tsx'
+import { SYSTEM_PROMPT_KIND, systemPromptDefinition } from './system-prompt.ts'
+import { SystemPromptCard } from './system-prompt-card.tsx'
 
 export const inject = ['slots', 'connection', 'remote', 'configForms']
 
@@ -59,21 +61,27 @@ export function apply(ctx: ClientContext): void {
 
   const face: NodeAppearanceRowFace = {
     hooks: { nodeAppearance: form },
-    // Staged-edit save: write the three keys in one write.
+    // Staged-edit save: every switch and both color maps in one write.
     //
     // `colors` / `toolColors` 是**对象**字段，不能走 `set(field, value)`——它的
     // JSDoc 写明只接受 scalar field。改用 `mutate()` 的路径操作：`SettingsPathOpView`
     // 是 `{ op: 'set'; path: string[]; value }`，其注释说明写入会「creating
     // intermediate objects」，所以 `['colors']` 整个子树可以一次写掉。
+    //
+    // 三个开关都在这里：漏一个，「恢复初始设置」就会把它留在用户改过的值上
+    // （`showContextInjection` 一度就这么漏掉了）。
     apply: async (value) => {
       await form.mutate([
         { op: 'set', path: ['showThinking'], value: value.showThinking ?? true },
+        { op: 'set', path: ['showContextInjection'], value: value.showContextInjection ?? true },
+        { op: 'set', path: ['showSystemPrompt'], value: value.showSystemPrompt ?? true },
         { op: 'set', path: ['colors'], value: value.colors ?? {} },
         { op: 'set', path: ['toolColors'], value: value.toolColors ?? {} },
       ] as never)
     },
     setShowThinking: (show) => { void form.set('showThinking', show) },
     setShowContextInjection: (show) => { void form.set('showContextInjection', show) },
+    setShowSystemPrompt: (show) => { void form.set('showSystemPrompt', show) },
     setCategoryColor: (category, color) => {
       const value = form.getSnapshot().value
       void form.mutate([
@@ -213,13 +221,34 @@ export function apply(ctx: ClientContext): void {
   }
   serviceContext.inject(['uiConversation'], (scoped) => {
     const conversation = (scoped as unknown as {
-      uiConversation: { events: { register(definition: unknown): () => void } }
+      uiConversation: {
+        events: { register(definition: unknown): () => void }
+        /** 官方把系统提示词的状态推导暴露成了服务方法（ui-conversation 的 assembly）。 */
+        inspectSystemPrompt(previous: unknown, event: unknown): unknown
+      }
     }).uiConversation
     scoped.effect(
       () => conversation.events.register(contextInjectionDefinition()),
       'dsh-node-appearance: restore injected-context rows',
     )
+    // 系统提示词卡与注入行同一处境（官方节点仍在生成、只是被 isVisibleChatNode 滤掉），
+    // 所以走同一条路子。只接管 `system/message` 那半 —— 详见 system-prompt.ts。
+    scoped.effect(
+      () => conversation.events.register(
+        systemPromptDefinition((previous, event) => conversation.inspectSystemPrompt(previous, event)),
+      ),
+      'dsh-node-appearance: restore system-prompt cards',
+    )
   })
+
+  ctx.slots.inject('conversation.chat.node' as never, () => ctx.slots.register({
+    name: 'conversation.chat.node',
+    key: SYSTEM_PROMPT_KIND,
+    // 复用官方 chat 字典：`message.systemPrompt`（系统提示词）与
+    // `message.systemPromptUpdate`（系统提示词更新）两条文案都还在里面 ——
+    // 0.2.0 只是不再用它们画行了，key 没删。
+    locale: 'chat',
+  } as never, SystemPromptCard as never))
 
   ctx.slots.inject('conversation.chat.node' as never, () => ctx.slots.register({
     name: 'conversation.chat.node',

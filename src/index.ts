@@ -56,6 +56,11 @@ export interface Config {
    * them out. 见 `src/client/context-injection.ts` 的由来说明。
    */
   showContextInjection: Volatile<boolean>
+  /**
+   * Restore the system-prompt cards DSH 0.2.0 stopped rendering; false leaves
+   * them out. 见 `src/client/system-prompt.ts` 的由来说明。
+   */
+  showSystemPrompt: Volatile<boolean>
   /** Per-category accent colors. */
   colors: Volatile<NodeAppearanceColors>
   /** Per-tool accent overrides keyed by wire tool name. */
@@ -86,6 +91,7 @@ export const DEFAULT_COLORS: NodeAppearanceColors = {
 export const Config = z.object({
   showThinking: z.boolean().default(true).volatile(),
   showContextInjection: z.boolean().default(true).volatile(),
+  showSystemPrompt: z.boolean().default(true).volatile(),
   colors: z.object({
     search: z.string().default(DEFAULT_COLORS.search),
     agent: z.string().default(DEFAULT_COLORS.agent),

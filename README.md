@@ -20,6 +20,7 @@ This plugin belongs to the **`@max-null/*` family** — a set of plugins that to
 - **思考过程显示开关**：关闭后 Think 思考行前端隐藏（`display: none`），配置项与配色在同一张设置卡片里。
 - **上下文注入行（把 0.2.0 拿掉的画回来）**：DSH 从 `dsh-v0.1.7-alpha.1` 起，ui-chat 的 `isVisibleChatNode()` 把**普通上下文注入行**整个从对话面板滤掉——记忆快照、`AGENTS.md`、技能目录、时间快照这些全在其中，只放行含工具增删的 context 行。本插件用**自有 kind**（`context-injection`）接住同一批 `user/message` 再画回来：形态对齐官方 `ContextInjectionRow`（同一张折叠行、同一个 `message.contextInjection` 文案），配色沿用 `context` 类别。**为什么不是接管**：官方那条节点仍在生成、只是不再渲染，遮蔽同一个 key 根本轮不到它——改走 `ChatNodeDataMap` 这个 merge-extensible 的渲染 kind 注册口。由设置里的「显示上下文注入」开关控制，默认开；展开体不限高，滚动只留给会话消息流那一层。
 - **技能行（`skill`）**：接管内核的「加载技能」行。官方展开体是一张「说明」卡，里面用 `<pre>` 直接铺 `skill` 工具返回的**规范渲染块**——`<skill_content>` 套 `<skill_resources>` 再套 `<skill_instructions>`，那层 XML 壳对人不构成信息，却把技能正文夹在中间。接管后正文直出（壳在解析时丢掉），**资源指引单独成节并默认收起**（它解释技能去哪些路径找素材，属于按需查看的背景，不是正文）；`查看` 入口、四态、状态词、技能名全部保留。**结构不符时原样退回官方形态**——绝不猜，也不把展开体渲染成空白。
+- **系统提示词行（0.2.0 恢复）**：`isVisibleChatNode()` 也排除 `system-prompt`，官方 `system-message` / `request-prompt` 两张卡同样「仍在生成、只是不再渲染」。本插件把 `system-message` 那半接回来（自有 kind `system-prompt-notice`）：系统提示词**发生变化**时各出一张卡——首轮那张就是「会话发起时的系统提示词」，之后内容变了再出一张并标「系统提示词更新」。`request-prompt` 那半不做：它要复刻与 `system-message` 协作的位置状态机（`shownByUpdate` / `stableRequestPromptAnchor`），增量只是「没变时也补一张」。**形态照官方**（同一个折叠行、同一对文案 key、保留 `data-system-prompt-body` 锚点），不渲染 markdown——提示词的换行与缩进本身就是信息。状态推导直接调官方的服务方法 `uiConversation.inspectSystemPrompt`，不自己复刻。由「显示系统提示词」开关控制，默认开。
 - **即时生效**：设置改动立即重绘会话，并持久化到 DSH 用户设置文档（`$DSH_HOME/settings.yaml`）。
 
 ## 截图
@@ -63,6 +64,10 @@ This plugin belongs to the **`@max-null/*` family** — a set of plugins that to
 | 技能行（展开 · 正文直出，XML 壳已剥） |
 |---|
 | ![技能行](https://raw.githubusercontent.com/Max-Null/dsh-node-appearance/main/docs/shots/技能行-展开.png) |
+
+| 系统提示词卡（0.2.0 起官方隐藏，本插件画回来 · 展开态） |
+|---|
+| ![系统提示词卡](https://raw.githubusercontent.com/Max-Null/dsh-node-appearance/main/docs/shots/系统提示词卡-展开.png) |
 
 ## 安装
 
