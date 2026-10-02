@@ -63,6 +63,30 @@ export const TOOL_CATEGORIES: Record<Exclude<NodeCategory, 'command' | 'thinking
 }
 
 /**
+ * Wire tool names that are two platform spellings of one row.
+ *
+ * `packages/bundle/base/cordis.patch.yml` registers the shell executors
+ * exclusively by platform — `tool-bash` carries
+ * `disabled: process.platform === 'win32'` and `tool-pwsh` the negation — so a
+ * running instance always has exactly one of them, and the shell row is
+ * `data-tool="bash"` on POSIX but `data-tool="pwsh"` on Windows. An override
+ * keyed by the name the user read in the docs therefore misses the row that
+ * platform actually renders, and `querySelector('[data-tool="bash"]')` returns
+ * null there (issue #1). The kernel groups the two the same way: ui-tool's
+ * `TOOL_VARIANTS` maps `pwsh` onto the `bash` row variant.
+ *
+ * Listed per name so lookup is one property read; the pairs must stay
+ * symmetric (the palette spec asserts it).
+ */
+export const TOOL_ALIAS_GROUPS: Record<string, readonly string[]> = {
+  bash: ['pwsh'],
+  pwsh: ['bash'],
+}
+
+/** Every wire name the shipped category table covers. */
+const LISTED_TOOLS: ReadonlySet<string> = new Set(Object.values(TOOL_CATEGORIES).flat())
+
+/**
  * The activity keys a step-process group header publishes on its
  * `data-process-activity` attribute. The set is the key list of ui-chat's
  * `ChatGroupSeat` `PROCESS_ICONS`, which is identical in kernel 0.1.7-rc.2 and
@@ -220,6 +244,32 @@ function attributeLiteral(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
 }
 
+/** One per-tool accent rule. */
+function toolRule(tool: string, color: string): string {
+  return `[data-chat-flow-kind="tool-call"] [data-tool="${attributeLiteral(tool)}"] { --ncolor-accent: ${color}; }`
+}
+
+/**
+ * The color an explicit `toolColors` entry assigns to one wire name.
+ *
+ * A direct entry wins. Otherwise the platform twin's entry applies — see
+ * {@link TOOL_ALIAS_GROUPS}: `bash` and `pwsh` are two spellings of one shell
+ * row, so an override keyed by either has to reach the row the running
+ * platform renders. Configuring both keeps them independent.
+ * @param toolOverrides - the configured `toolColors` map.
+ * @param tool - the wire tool name being painted.
+ * @returns the override color, or undefined when the tool has none.
+ */
+function overrideFor(toolOverrides: Record<string, string> | undefined, tool: string): string | undefined {
+  const direct = toolOverrides?.[tool]
+  if (typeof direct === 'string' && isCssColor(direct)) return direct
+  for (const twin of TOOL_ALIAS_GROUPS[tool] ?? []) {
+    const alias = toolOverrides?.[twin]
+    if (typeof alias === 'string' && isCssColor(alias)) return alias
+  }
+  return undefined
+}
+
 /**
  * Steering marker icon: a corner-up-left arrow (mid-turn guidance inserted
  * into the running answer), drawn as a mask so the icon inherits the
@@ -243,16 +293,23 @@ export function buildCss(settings: NodeAppearanceSettings | undefined): string {
   // declared after the category rules would override every category color.
   lines.push(`${TOOL_ROW} { --ncolor-accent: ${colors.other}; }`)
 
-  // Per-tool accent assignments (explicit overrides win over category color).
+  // Per-tool accent assignments (explicit overrides win over category color,
+  // and an override on either platform spelling of a tool reaches both).
   for (const [category, tools] of Object.entries(TOOL_CATEGORIES)) {
     const key = category as keyof typeof TOOL_CATEGORIES
     for (const tool of tools) {
-      const override = toolOverrides?.[tool]
-      const color = typeof override === 'string' && isCssColor(override)
-        ? override
-        : colors[key]
-      lines.push(`[data-chat-flow-kind="tool-call"] [data-tool="${attributeLiteral(tool)}"] { --ncolor-accent: ${color}; }`)
+      lines.push(toolRule(tool, overrideFor(toolOverrides, tool) ?? colors[key]))
     }
+  }
+
+  // An explicit override for a tool the shipped table does not list still has
+  // to paint: the setting names a wire tool, and the table is only a default.
+  // Declared after the category rules for the same cascade reason as the
+  // fallback above — equal specificity, so the later declaration wins and a
+  // listed tool that merely inherits a twin's color stays where it landed.
+  for (const [tool, color] of Object.entries(toolOverrides ?? {})) {
+    if (LISTED_TOOLS.has(tool) || !isCssColor(color)) continue
+    lines.push(toolRule(tool, color))
   }
 
   // Non-tool accent rows.

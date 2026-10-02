@@ -1,6 +1,6 @@
 {
   "name": "@max-null/dsh-node-appearance",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "会话节点外观插件：节点/工具分类着色（可配置）、折叠摘要条按类别取色、恢复 0.2.0 起被官方隐藏的上下文注入行与系统提示词卡（自有 kind 注册 + 各自开关）、接管「加载技能」行（展开体剥掉 XML 壳）、触发通知卡字段化（接管 turn-trigger）、提问卡展示全部选项、交付文件清单展开、目标详情折叠条、思考过程显示开关（DeepSeek Harness Web GUI）",
   "license": "MIT",
   "publishConfig": {

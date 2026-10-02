@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest'
 import {
-  buildCss, DEFAULT_COLORS, isCssColor, PROCESS_ACTIVITIES, resolveColors, TOOL_CATEGORIES,
+  buildCss, DEFAULT_COLORS, isCssColor, PROCESS_ACTIVITIES, resolveColors, TOOL_ALIAS_GROUPS, TOOL_CATEGORIES,
 } from '../src/client/palette.ts'
 
 describe('isCssColor', () => {
@@ -136,6 +136,64 @@ describe('buildCss', () => {
   it('ignores an invalid tool override and keeps the category color', () => {
     const css = buildCss({ toolColors: { web_search: 'oops' } })
     expect(css).toContain(`[data-tool="web_search"] { --ncolor-accent: ${DEFAULT_COLORS.search}; }`)
+  })
+
+  it('lets one shell override reach both platform spellings of the row', () => {
+    // `tool-bash` 与 `tool-pwsh` 在 bundle 里按 `process.platform` 二选一注册
+    // （`bundle/base/cordis.patch.yml`），所以同一个 shell 行在两个平台上分别叫
+    // `data-tool="bash"` 与 `data-tool="pwsh"`。只认字面名的覆盖会让用户在另一
+    // 个平台上配完毫无反应，且 `querySelector('[data-tool="bash"]')` 返回 null
+    // —— 这就是 issue #1。
+    const css = buildCss({ toolColors: { bash: '#4b5fe1' } })
+    expect(css).toContain('[data-tool="bash"] { --ncolor-accent: #4b5fe1; }')
+    expect(css).toContain('[data-tool="pwsh"] { --ncolor-accent: #4b5fe1; }')
+  })
+
+  it('lets the other spelling drive the shell row too', () => {
+    const css = buildCss({ toolColors: { pwsh: '#4b5fe1' } })
+    expect(css).toContain('[data-tool="bash"] { --ncolor-accent: #4b5fe1; }')
+    expect(css).toContain('[data-tool="pwsh"] { --ncolor-accent: #4b5fe1; }')
+  })
+
+  it('keeps each spelling independent when both are configured', () => {
+    const css = buildCss({ toolColors: { bash: '#111111', pwsh: '#222222' } })
+    expect(css).toContain('[data-tool="bash"] { --ncolor-accent: #111111; }')
+    expect(css).toContain('[data-tool="pwsh"] { --ncolor-accent: #222222; }')
+  })
+
+  it('keeps the alias pairs symmetric and inside one category', () => {
+    // 单向的别名会让「配 A 影响 B、配 B 不影响 A」这种半截行为悄悄上线。
+    const categoryOf = (tool: string): string | undefined =>
+      Object.entries(TOOL_CATEGORIES).find(([, tools]) => tools.includes(tool))?.[0]
+    for (const [tool, twins] of Object.entries(TOOL_ALIAS_GROUPS)) {
+      expect(twins.length).toBeGreaterThan(0)
+      for (const twin of twins) {
+        expect(TOOL_ALIAS_GROUPS[twin]).toContain(tool)
+        expect(categoryOf(tool)).toBeDefined()
+        expect(categoryOf(twin)).toBe(categoryOf(tool))
+      }
+    }
+  })
+
+  it('paints an explicit override for a tool the shipped table does not list', () => {
+    // 设置项承诺的是「按 wire 工具名覆盖」，类别表只是出厂默认。表外的名字
+    // 之前连规则都不生成 —— 用户配了、界面不报错、也没有任何效果。
+    const css = buildCss({ toolColors: { cordis_define: '#abcdef' } })
+    expect(css).toContain('[data-tool="cordis_define"] { --ncolor-accent: #abcdef; }')
+  })
+
+  it('ignores an invalid override on an unlisted tool', () => {
+    expect(buildCss({ toolColors: { cordis_define: 'oops' } })).not.toContain('[data-tool="cordis_define"]')
+  })
+
+  it('declares unlisted-tool overrides after the fallback so they win the cascade', () => {
+    // 与类别规则同一机制：`[data-tool]` 和 `[data-tool="x"]` 特异性相等，
+    // 后声明的赢。挪到兜底前面就会被兜底的 other 色盖回去。
+    const css = buildCss({ toolColors: { cordis_define: '#abcdef' } })
+    const fallbackAt = css.indexOf('[data-chat-flow-kind="tool-call"] [data-tool] {')
+    const overrideAt = css.indexOf('[data-tool="cordis_define"] {')
+    expect(fallbackAt).toBeGreaterThanOrEqual(0)
+    expect(overrideAt).toBeGreaterThan(fallbackAt)
   })
 
   it('paints unlisted tools with the other color', () => {
