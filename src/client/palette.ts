@@ -57,7 +57,7 @@ export const TOOL_CATEGORIES: Record<Exclude<NodeCategory, 'command' | 'thinking
   execute: ['bash', 'pwsh', 'run_code', 'terminal_open', 'terminal_close', 'terminal_list', 'terminal_read', 'terminal_send', 'terminal_signal', 'str_replace_editor'],
   file: ['read', 'write', 'edit', 'read_image', 'glob', 'grep'],
   deliver: ['present'],
-  task: ['todo_write', 'create_goal', 'get_goal', 'update_goal', 'job_kill', 'job_list', 'job_output', 'schedule_create', 'schedule_delete', 'schedule_list', 'exit_plan_mode'],
+  task: ['todo_write', 'create_goal', 'get_goal', 'update_goal', 'job_kill', 'job_list', 'job_output', 'schedule_create', 'schedule_view', 'schedule_edit', 'schedule_list', 'exit_plan_mode'],
   ask: ['ask_user_question'],
   other: [],
 }
