@@ -74,6 +74,19 @@ describe('buildCss', () => {
     expect(css).toContain(`[data-chat-flow-kind="context"] { --ncolor-accent: ${DEFAULT_COLORS.context}; }`)
   })
 
+  it('paints the compaction marker and carries the shared rail', () => {
+    // 压缩标记走自己的类别色（比 context / summary 深一级），并与其它块状行共用
+    // 同一套 3px rail + 8% wash —— 少了后一条它就只有颜色没有形。
+    // 自动压缩（compaction）与 `/compact`（manual-compaction）共用同一个色。
+    const css = buildCss({})
+    expect(css).toContain(
+      `[data-chat-flow-kind="compaction"], [data-chat-flow-kind="manual-compaction"] { --ncolor-accent: ${DEFAULT_COLORS.compaction}; }`,
+    )
+    const paintTargets = css.match(/([^}]*?)\{\s*box-shadow: inset 3px 0 0 var\(--ncolor-accent\);/)
+    expect(paintTargets?.[1]).toContain('[data-chat-flow-kind="compaction"]')
+    expect(paintTargets?.[1]).toContain('[data-chat-flow-kind="manual-compaction"]')
+  })
+
   it('paints a collapsed Turn summary bar on its hairline, not with a rail', () => {
     // Turn 级摘要条（「已完成工作 · 用时 35 秒」）在内核里是**整行宽的分节线**
     // （`padding: 0` + 底部发丝线），不是块状行。套块状行的 rail 会紧贴文字，
@@ -112,19 +125,20 @@ describe('buildCss', () => {
     expect(buildCss({ showThinking: false })).toContain(`[data-variant="think"] { display: none !important; }`)
   })
 
-  it('hides the restored injection rows only when showContextInjection is false', () => {
-    expect(buildCss({})).not.toContain('context-injection"] { display: none')
-    expect(buildCss({ showContextInjection: true })).not.toContain('context-injection"] { display: none')
+  it('hides the injection rows only when showContextInjection is false', () => {
+    // 0.2.2 起官方自己画出这些行，开关直接命中官方 kind。
+    expect(buildCss({})).not.toContain('display: none')
+    expect(buildCss({ showContextInjection: true })).not.toContain('display: none')
     expect(buildCss({ showContextInjection: false }))
-      .toContain(`[data-chat-flow-kind="context-injection"] { display: none !important; }`)
+      .toContain(`[data-chat-flow-kind="context"] { display: none !important; }`)
   })
 
-  it('paints the official and the restored injection rows with one context color', () => {
-    // 0.2.0 起官方那条 context 行不再渲染，配色要靠本插件自己的 kind 接住；
-    // 两个选择器同色，恢复出来的行才与它在同一条视觉轴上。
+  it('paints the injection rows on the official kind alone', () => {
+    // 插件不再另造 `context-injection` 节点（那会让同一行出现两份），配色与开关
+    // 全部落在官方 `context` 上。
     const css = buildCss({})
     expect(css).toContain(`[data-chat-flow-kind="context"] { --ncolor-accent: ${DEFAULT_COLORS.context}; }`)
-    expect(css).toContain(`[data-chat-flow-kind="context-injection"] { --ncolor-accent: ${DEFAULT_COLORS.context}; }`)
+    expect(css).not.toContain('context-injection')
   })
 
   it('gives explicit tool overrides priority over category colors', () => {

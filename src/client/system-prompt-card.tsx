@@ -9,14 +9,14 @@
  * 不渲染 markdown），缺的只是「它不再显示」这一件事。所以本文件存在的唯一理由是
  * 把行接回来，而不是重塑它。
  *
- * 样式表复用 `context-injection-card.module.css`，与官方复用
- * `ContextInjectionRow.module.css` 是同一个做法：两张折叠行本就该长成一个样子。
+ * 样式表与官方复用 `ContextInjectionRow.module.css` 是同一个做法：折叠行（外壳、
+ * 展开体不限高、正文按真实换行）都交给官方那套基线，本卡片只带自己的类名。
  */
 import { useState } from 'react'
 import { DisclosureRow, IconBrowseOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { SystemPromptData } from './system-prompt.ts'
 import type { TriggerTranslate } from './trigger-model.ts'
-import css from './context-injection-card.module.css'
+import css from './system-prompt-card.module.css'
 
 /** 本卡从 slot owner 收到的字段。 */
 export interface SystemPromptCardProps {

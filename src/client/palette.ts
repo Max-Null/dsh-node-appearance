@@ -12,9 +12,9 @@ export const NODE_APPEARANCE_NS = 'node-appearance'
 /** The plugin's style tag identity (removed/replaced on every re-paint). */
 export const STYLE_TAG_ID = `${NODE_APPEARANCE_NS}/rules`
 
-/** One paintable node category. `command`, `thinking`, `context`, `summary` are non-tool rows. */
+/** One paintable node category. `command`, `thinking`, `context`, `compaction`, `summary` are non-tool rows. */
 export type NodeCategory =
-  | 'search' | 'agent' | 'execute' | 'file' | 'deliver' | 'task' | 'ask' | 'command' | 'thinking' | 'context' | 'summary' | 'steering' | 'other'
+  | 'search' | 'agent' | 'execute' | 'file' | 'deliver' | 'task' | 'ask' | 'command' | 'thinking' | 'context' | 'compaction' | 'summary' | 'steering' | 'other'
 
 /** Accent color per category (CSS colors). */
 export type NodeAppearanceColors = Record<NodeCategory, string>
@@ -45,13 +45,14 @@ export const DEFAULT_COLORS: NodeAppearanceColors = {
   command: '#f97316', // orange — /command nodes
   thinking: '#c4b5fd', // light purple — Think rows
   context: '#8a9bb5', // slate blue — injected context rows (informational)
+  compaction: '#4338ca', // indigo 700 — 上下文已压缩标记。比其余类别深一级：这一行不常出现，但一出现就意味着会话历史被压掉了，值得先看见
   summary: '#94a3b8', // slate 400 — Turn-level folded summary bar（容器层摘要，比 context 更淡）
   steering: '#14b8a6', // teal — steering rows (rc.8)
   other: '#64748b', // slate — every unlisted tool
 }
 
 /** Wire tool name → category for the shipped mapping. */
-export const TOOL_CATEGORIES: Record<Exclude<NodeCategory, 'command' | 'thinking' | 'context' | 'summary' | 'steering'>, readonly string[]> = {
+export const TOOL_CATEGORIES: Record<Exclude<NodeCategory, 'command' | 'thinking' | 'context' | 'compaction' | 'summary' | 'steering'>, readonly string[]> = {
   search: ['web_search', 'web_fetch'],
   agent: ['subagent', 'subagent_acp', 'subagent_fork', 'send_message', 'interrupt_agent', 'list_agents', 'report', 'workflow'],
   execute: ['bash', 'pwsh', 'run_code', 'terminal_open', 'terminal_close', 'terminal_list', 'terminal_read', 'terminal_send', 'terminal_signal', 'str_replace_editor'],
@@ -131,16 +132,30 @@ const TOOL_ROW_ROOT = '[data-chat-flow-kind="tool-call"] [data-tool][data-varian
 const COMMAND_ROW = '[data-chat-flow-kind="command"]'
 /** Selector of the Think reasoning row. */
 const THINK_ROW = '[data-variant="think"]'
-/** Selector of the injected-context row (the flow-item wrapper). */
+/**
+ * Selector of the injected-context row (the flow-item wrapper).
+ *
+ * 官方 `ContextInjectionRow` 的 kind。0.2.0 曾把整类行滤掉，插件只好另造
+ * `context-injection` 节点接住；0.2.2 起 `isVisibleChatNode()` 只排除
+ * `system-prompt`，官方这条行回来了，插件不再造节点——配色、显隐开关都直接
+ * 命中这个 kind，避免同一行画两份。
+ */
 const CONTEXT_ROW = '[data-chat-flow-kind="context"]'
 /**
- * Selector of the injected-context row **restored by this plugin**.
+ * Selector of the compaction marker row — 「上下文已压缩 · 已压缩 N 条历史记录」.
  *
- * 0.2.0 起 ui-chat 的 `isVisibleChatNode()` 按 kind 排除 `context`，官方那条
- * 行不再渲染；本插件用自有 kind 重新接住同一批事件（见 `context-injection.ts`）。
- * 两个 kind 都要着色，否则恢复出来的行没有配色。
+ * 官方 `ChatNodeSeat` 把节点自己的 kind 写在 flow-item 包装上。自动压缩的 kind 是
+ * `compaction`；`/compact` 那条命令的 kind 是 `manual-compaction`，而它的渲染
+ * （官方 `CompactionCommandCard`）在压缩落地时画的正是同一个 `CompactionItem` 行 ——
+ * 两个 kind 一起接，否则手动压缩那块看着像漏了配色。命令没落地（失败 / 仍在跑）时
+ * 那行退回普通命令卡，跟着这个色也不算错：它本来就是在压缩上下文。
+ *
+ * 它**不是**完整的分节线：整行仍是一个 24px 的可展开按钮（官方
+ * `MessageItem.module.css` 的 `.compactionRow` / `.compactionButton`），展开时按钮
+ * 自己 sticky 在顶端、背景不透明 —— 那层不透明底色会盖住 wash，但 3px 的 rail 落
+ * 在它的 padding 之外，照样看得见。
  */
-const INJECTION_ROW = '[data-chat-flow-kind="context-injection"]'
+const COMPACTION_ROW = '[data-chat-flow-kind="compaction"], [data-chat-flow-kind="manual-compaction"]'
 /**
  * Selector of the system-prompt card **restored by this plugin**.
  *
@@ -200,9 +215,9 @@ const PROCESS_HEADER_OPEN = '[data-step-process] [data-process-activity][aria-ex
 /**
  * The rows that carry the accent rail + wash: the ToolRow root (not its wrapper
  * callRow — both carry data-tool, only the inner row carries data-variant),
- * command nodes, Think rows, injected-context rows, tool-result rows, and a
- * collapsed step-process group header. The collapsed Turn summary bar is
- * deliberately absent — see {@link TURN_SUMMARY}.
+ * command nodes, Think rows, injected-context rows, the compaction marker,
+ * tool-result rows, and a collapsed step-process group header. The collapsed
+ * Turn summary bar is deliberately absent — see {@link TURN_SUMMARY}.
  * User input rows are excluded — right-alignment already
  * distinguishes them (2026-08-20 用户反馈）；steering rows 也走独立规则
  * （见 buildCss：在 userStack 层做 wash，不涂整行 rail）。
@@ -210,7 +225,7 @@ const PROCESS_HEADER_OPEN = '[data-step-process] [data-process-activity][aria-ex
  * with a matching padding-left so the rail never covers the row's leading icon.
  */
 const ACCENTED_ROWS = [
-  TOOL_ROW_ROOT, COMMAND_ROW, THINK_ROW, CONTEXT_ROW, INJECTION_ROW, SYSTEM_PROMPT_ROW, TOOL_RESULT_ROW, collapsedProcessHeader(),
+  TOOL_ROW_ROOT, COMMAND_ROW, THINK_ROW, CONTEXT_ROW, COMPACTION_ROW, SYSTEM_PROMPT_ROW, TOOL_RESULT_ROW, collapsedProcessHeader(),
 ].join(',\n')
 
 /**
@@ -316,7 +331,7 @@ export function buildCss(settings: NodeAppearanceSettings | undefined): string {
   lines.push(`${COMMAND_ROW} { --ncolor-accent: ${colors.command}; }`)
   lines.push(`${THINK_ROW} { --ncolor-accent: ${colors.thinking}; }`)
   lines.push(`${CONTEXT_ROW} { --ncolor-accent: ${colors.context}; }`)
-  lines.push(`${INJECTION_ROW} { --ncolor-accent: ${colors.context}; }`)
+  lines.push(`${COMPACTION_ROW} { --ncolor-accent: ${colors.compaction}; }`)
   // 系统提示词卡与注入行同族（都是模型实际看到的上下文），共用 context 色：
   // 语义上它们是同一件事的两种来源，硬分两色就得先解释「为什么不一样」。
   lines.push(`${SYSTEM_PROMPT_ROW} { --ncolor-accent: ${colors.context}; }`)
@@ -385,11 +400,12 @@ export function buildCss(settings: NodeAppearanceSettings | undefined): string {
   mask: url("${STEERING_ICON}") center / contain no-repeat;
 }`)
 
-  // Visibility switch for the restored injection rows. 选 CSS 而不是「让
-  // Definition 不产出节点」：后者要 Definition 读配置并触发引擎重跑，而
-  // `showThinking` 已经确立了「前端隐藏」这条先例，两处开关行为一致更好预期。
+  // Visibility switch for the injected-context rows. 官方 0.2.2 起会自己画这些行，
+  // 所以开关直接命中官方 kind；选 CSS 而不是「让 Definition 不产出节点」：后者要
+  // Definition 读配置并触发引擎重跑，而 `showThinking` 已经确立了「前端隐藏」这条
+  // 先例，三处开关行为一致更好预期。
   if (settings?.showContextInjection === false) {
-    lines.push(`${INJECTION_ROW} { display: none !important; }`)
+    lines.push(`${CONTEXT_ROW} { display: none !important; }`)
   }
 
   // 同一开关形态的第三个：恢复出来的系统提示词卡。

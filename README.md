@@ -8,7 +8,7 @@ This plugin belongs to the **`@max-null/*` family** — a set of plugins that to
 
 ## 功能
 
-- **节点着色**：工具调用、联网搜索、智能体调用、代码 / 指令执行、文件操作、交付文件、任务 / 目标、指令节点（`/command`）、思考行（Think）——每种类别一个可配置颜色，左侧 3px 色条 + 淡色底，深 / 浅主题均可读。
+- **节点着色**：工具调用、联网搜索、智能体调用、代码 / 指令执行、文件操作、交付文件、任务 / 目标、指令节点（`/command`）、思考行（Think）、上下文注入行、**上下文压缩标记**、工作摘要条、模型引导行——每种类别一个可配置颜色，左侧 3px 色条 + 淡色底，深 / 浅主题均可读。
 - **过程组组头着色**：内核把一串工具调用折成一行摘要时（「已读取文件并执行了命令」「已搜索代码」），组头按内核排在第一位的活动类别取色，与展开后各成员行的颜色同一色系——收起态也能一眼看出这一组在干什么。取色不解析标题文本，读的是内核在组头上发布的 `data-process-activity` 属性。
 - **Turn 级折叠条着色**：最外层的「已完成工作 · 用时 35 秒」用单独的中性色 `summary`（默认 `#94a3b8`）——它只有轮次号与工具计数，没有类别语义，硬套类别色是武断的。两条折叠条都**只在收起态**着色：展开后成员行各自带色，容器再涂就是两层色块叠在一起。
 - **两种折叠形态，两种涂法**：过程组组头是「一行摘要」（以图标起头），走 3px 左轨 + 淡色底，内距比工具行宽（8px），让轨与图标之间有呼吸；Turn 级摘要条是**整行宽的分节线**（内核给它 `padding: 0` 加一条底部发丝线），改用**底线染色**、不加轨也不内缩 —— 否则轨会紧贴文字，而为补偿轨加的内缩又会让它与上下所有行错位。
@@ -18,7 +18,8 @@ This plugin belongs to the **`@max-null/*` family** — a set of plugins that to
 - **目标条详情**：官方目标条下方接一条**与它拼成同一张卡**的详情行（借待办卡片的折叠形态），把官方条上被 ellipsis 截断的目标展开成可读详情：完整目标、阶段、阻塞原因、自主轮次、目标标识。只读投影，不碰官方的编辑/暂停/清除，那四个按钮仍是官方在跑。
 - **交付文件行**：`present` 的行改为折叠态只报「首个文件名 + 数量」，展开后逐文件成行（扩展名徽标 + 文件名 + 所在目录），并在结果文本上方标注行数。官方折叠行把全部文件名逗号拼成一行（`fileNames()` 的 `.join(', ')`），多文件时读不完，也看不出这一轮交付了几个。配色单列 `deliver` 类别（默认青蓝 `#06b6d4`）——本轮生成文件的那些行与交付行常常同屏出现，与 `file`（`read`/`write`）共用绿色会分不清谁是谁。
 - **思考过程显示开关**：关闭后 Think 思考行前端隐藏（`display: none`），配置项与配色在同一张设置卡片里。
-- **上下文注入行（把 0.2.0 拿掉的画回来）**：DSH 从 `dsh-v0.1.7-alpha.1` 起，ui-chat 的 `isVisibleChatNode()` 把**普通上下文注入行**整个从对话面板滤掉——记忆快照、`AGENTS.md`、技能目录、时间快照这些全在其中，只放行含工具增删的 context 行。本插件用**自有 kind**（`context-injection`）接住同一批 `user/message` 再画回来：形态对齐官方 `ContextInjectionRow`（同一张折叠行、同一个 `message.contextInjection` 文案），配色沿用 `context` 类别。**为什么不是接管**：官方那条节点仍在生成、只是不再渲染，遮蔽同一个 key 根本轮不到它——改走 `ChatNodeDataMap` 这个 merge-extensible 的渲染 kind 注册口。由设置里的「显示上下文注入」开关控制，默认开；展开体不限高，滚动只留给会话消息流那一层。
+- **上下文注入行**：`dsh-v0.1.7-alpha.1` 起 ui-chat 的 `isVisibleChatNode()` 曾把**普通上下文注入行**整类从对话面板滤掉（记忆快照、`AGENTS.md`、技能目录、时间快照都在其中），本插件当时用自有 kind `context-injection` 接住同一批 `user/message` 画了回来。0.2.2 起官方 `ContextInjectionRow` 自己回来了——`isVisibleChatNode()` 现在只排除 `system-prompt`——于是两份并排出现；插件已撤掉那份自有节点，**只保留配色与开关**：`context` 类别色直接命中官方 kind，设置里的「显示上下文注入」改为隐藏官方行。收起态的标题、来源名、摘要与按 `form` 结构化的展开体全部由官方渲染。
+- **上下文压缩标记**：内核压掉历史时会留一行「上下文已压缩 · 已压缩 N 条历史记录（约 M tokens）」。自动压缩的节点 kind 是 `compaction`，`/compact` 那条命令走 `manual-compaction`（官方 `CompactionCommandCard` 在压缩落地时画的是同一个 `CompactionItem` 行），所以两个 kind 共用 `compaction` 这一个类别色（默认 `#4338ca`，比其余类别深一级）。它不常出现，但一出现就说明模型看到的历史已经换了一批——扫一眼会话就能定位那次转折。展开仍是官方那套摘要，插件只上色。
 - **技能行（`skill`）**：接管内核的「加载技能」行。官方展开体是一张「说明」卡，里面用 `<pre>` 直接铺 `skill` 工具返回的**规范渲染块**——`<skill_content>` 套 `<skill_resources>` 再套 `<skill_instructions>`，那层 XML 壳对人不构成信息，却把技能正文夹在中间。接管后正文直出（壳在解析时丢掉），**资源指引单独成节并默认收起**（它解释技能去哪些路径找素材，属于按需查看的背景，不是正文）；`查看` 入口、四态、状态词、技能名全部保留。**结构不符时原样退回官方形态**——绝不猜，也不把展开体渲染成空白。
 - **系统提示词行（0.2.0 恢复）**：`isVisibleChatNode()` 也排除 `system-prompt`，官方 `system-message` / `request-prompt` 两张卡同样「仍在生成、只是不再渲染」。本插件把 `system-message` 那半接回来（自有 kind `system-prompt-notice`）：系统提示词**发生变化**时各出一张卡——首轮那张就是「会话发起时的系统提示词」，之后内容变了再出一张并标「系统提示词更新」。`request-prompt` 那半不做：它要复刻与 `system-message` 协作的位置状态机（`shownByUpdate` / `stableRequestPromptAnchor`），增量只是「没变时也补一张」。**形态照官方**（同一个折叠行、同一对文案 key、保留 `data-system-prompt-body` 锚点），不渲染 markdown——提示词的换行与缩进本身就是信息。状态推导直接调官方的服务方法 `uiConversation.inspectSystemPrompt`，不自己复刻。由「显示系统提示词」开关控制，默认开。
 - **即时生效**：设置改动立即重绘会话，并持久化到 DSH 用户设置文档（`$DSH_HOME/settings.yaml`）。
@@ -57,7 +58,7 @@ This plugin belongs to the **`@max-null/*` family** — a set of plugins that to
 |---|---|
 | ![触发卡收起](https://raw.githubusercontent.com/Max-Null/dsh-node-appearance/main/docs/shots/触发卡-收起.png) | ![触发卡展开](https://raw.githubusercontent.com/Max-Null/dsh-node-appearance/main/docs/shots/触发卡-展开.png) |
 
-| 上下文注入行（0.2.0 起官方隐藏，本插件画回来 · 展开态） |
+| 上下文注入行（展开 · 官方渲染，插件只负责配色） |
 |---|
 | ![上下文注入行](https://raw.githubusercontent.com/Max-Null/dsh-node-appearance/main/docs/shots/上下文注入行-展开.png) |
 
@@ -112,7 +113,7 @@ node -p "require('@deepseek-ai/dsh-settings/package.json').version"
 ```yaml
 node-appearance:
   showThinking: true
-  showContextInjection: true   # 0.2.0 起官方隐藏了上下文注入行，插件把它们画回来；关闭即回到官方行为
+  showContextInjection: true   # 注入行的显隐；0.2.2 起这些行由官方渲染，关闭即把它们藏起来
   colors:
     search: '#3b82f6'    # 联网搜索
     agent: '#a855f7'     # 智能体调用
@@ -124,6 +125,7 @@ node-appearance:
     command: '#f97316'   # 指令节点
     thinking: '#c4b5fd'  # 思考过程
     context: '#8a9bb5'   # 上下文注入
+    compaction: '#4338ca' # 上下文已压缩（比其它类别深一级：不常出现，一出现就说明历史被压掉了）
     summary: '#94a3b8'   # 工作摘要（Turn 级折叠条）
     steering: '#14b8a6'  # 模型引导
     other: '#64748b'     # 其他工具
@@ -142,7 +144,7 @@ node-appearance:
 - 目标详情折叠条是**并列追加**而非接管：`conversation.input.dock` 是 list 槽（官方占 `todo` order 0 / `goal` order 10 / `queue` order 20），插件以 `order: 11` 紧随官方目标条追加自己的条目，只读 `useProjection('goal')`。官方的 edit/pause/resume/clear 是 ui-goal 的注册者私有注入面（四个 Remote 动词 + 一个带竞态防护的 activation 订阅源），接管它们等于在本插件里再养一套会写会话数据的 RPC 客户端。
 - 触发通知卡同样是**接管**：`conversation.chat.node` 是 keyed slot，插件在 `turn-trigger` key 上以 `priority: -1` 遮蔽官方的 `TurnTriggerNodeView`。**遮蔽是全 key 的** —— 全部触发来源都会走插件组件，所以 kind → 标题/图标映射在 `trigger-model.ts` 里逐条复刻了官方那一份，非目标轮次的来源按官方同构渲染。派生（`<goal_round>` 解析、时间格式）全在纯函数里，组件只做 JSX；目标轮次提示词的解析是**全有或全无**，结构不符即整卡退回「原文 + 等宽显示」的等价形态。
 - 技能行**也是接管**：ui-skill 在 `tool.call.toolview` 的 `skill` key 上有一条 priority 0 的注册，插件以 priority -1 遮蔽它（同提问卡与交付行）。四态、状态词、技能名、`查看` 入口与 `data-tool="skill"` / `data-state` 锚点逐项保留，只有展开体换了实现：`<skill_content>` / `<skill_resources>` / `<skill_instructions>` 三层壳在 `skill-model.ts` 里按**逐行对帧**解析掉——不用宽松正则，因为正文里出现 `</skill_instructions>` 这类字面量是允许的（官方测试就带这种用例）——正文直出、资源指引另起一节默认收起；**形状不符则原样铺回结果原文**，与官方形态等价。
-- 上下文注入行**不是接管，是补位**：官方那条 `context` 节点仍由 ui-chat 的 `messageDefinition` 生成，只是被 `isVisibleChatNode()` 滤掉了，所以遮蔽 `context` 这个 key 没有意义。插件改为注册一条**自有 kind**（`context-injection`）的 `ConversationNodeDefinition`（`ctx.uiConversation.events.register`）接住同一批 `user/message`，再在 `conversation.chat.node` 上以该 kind 注册渲染器 —— `ChatNodeDataMap` 是 merge-extensible 的（注释原文即「业务模块贡献的渲染 kind」），这是官方留的注册口。事件判定与 `producer` / `form` 投影复刻自 `@deepseek-ai/dsh-session/surface` 与 ui-chat 的 `conversation-nodes/event-projection.ts`（浏览器半边不能值导入其他包），派生全在 `context-injection-model.ts` 的纯函数里。
+- 上下文注入行**只着色、不管渲染**：官方 `ContextInjectionRow` 一直由 ui-chat 的 `messageDefinition` 产出 `context` 节点，`isVisibleChatNode()` 在 `dsh-v0.1.7-alpha.1`～0.2.1 期间把它滤掉，插件才不得不另造 `context-injection` 节点接事件；0.2.2 起该函数只排除 `system-prompt`，官方那行回来了，插件撤掉自有节点——两份并排的问题就此消掉，`context` 类别色与「显示上下文注入」开关直接命中官方 kind。系统提示词卡还留在补位那条路上（官方仍然不显示 `system-prompt`）。
 
 ## 已知限制
 
@@ -155,6 +157,7 @@ node-appearance:
 - 过程组组头的取色表（活动类别 → 配色类别）按内核的活动值域写死，覆盖 `thinking` / `read` / `readImage` / `search` / `edit` / `write` / `commands` / `code` / `webSearch` / `webFetch` / `subagents` / `plan` / `questions` / `tools`。内核新增活动类别时，未列出的类别会落到 `other`（灰）——不报错，但需插件侧补一行映射。组头是**聚合**标题（「已读取文件并执行了命令」横跨两类），所以只取内核排名第一的类别，一个组里少数派的操作不会改变组头颜色。
 - **触发通知卡是接管式实现，且遮蔽是全 key 的**：全部触发来源都走插件组件，所以官方新增来源时需插件侧同步图标与标题映射（未列出的 kind 落到「收到执行请求」这一默认，不会崩）。官方对该面板的后续改进也会被遮蔽（0.2.0 就把 `schedule` 的图标从 `IconAlarmClockOutlineRegular` 换成了 `IconClockOutlineRegular`）。
 - **目标轮次的解析是内核私有约定**：`<goal_round>` 的结构写在 `goal-round-driver/src/prompt.ts` 里，它一变（或 `maxGoalRounds` 未设导致写出 `Round: 1/undefined`），解析会**静默回退**到「原文 + 等宽显示」的等价形态 —— 不报错，但美化失效。判据是 `test/trigger-model.spec.ts` 里那批「骨架任一处不符即放弃」的用例。
+- **注入行依赖官方继续显示它**：插件已不再另造节点，所以上游若再次把 `context` 行滤掉（`isVisibleChatNode()` 里重新排除 `kind === 'context'`），注入行会跟着消失，「显示上下文注入」开关也一并失效——那时需要把自有 kind 那条 Definition 补回来。判据只有一句：`packages/client/ui-chat/src/client/contract/chat-visibility.ts` 的返回条件里是否还排除 `context`。
 - `toolColors` 按工具名匹配；DSH 工具名变更时旧条目静默失效（可在设置面板删除）。**工具名就是 DOM 上 `data-tool` 属性的值**，不是类别名。shell 工具是例外中的例外：内核 bundle 按 `process.platform` **二选一**注册 `tool-bash` / `tool-pwsh`，于是同一个 shell 行在 POSIX 上叫 `bash`、在 Windows 上叫 `pwsh`——这两个名字互为别名，配任一个都会作用到当前平台实际渲染的那一行，两个都配则各自独立。其余工具名仍需精确匹配（表内表外皆可，见上文「工具级颜色覆盖」），给一个不存在的工具名配颜色不会报错，也不会有任何效果。想知道当前会话里实际有哪些工具名，可在 DevTools 执行 `[...new Set([...document.querySelectorAll('[data-tool]')].map(el => el.dataset.tool))].sort()` 查看。
 
 ## 开发

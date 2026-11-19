@@ -32,6 +32,7 @@ export interface NodeAppearanceColors {
   command: string
   thinking: string
   context: string
+  compaction: string
   summary: string
   steering: string
   other: string
@@ -79,6 +80,7 @@ export const DEFAULT_COLORS: NodeAppearanceColors = {
   command: '#f97316', // orange — /command nodes
   thinking: '#c4b5fd', // light purple — Think rows
   context: '#8a9bb5', // slate blue — injected context rows (informational)
+  compaction: '#4338ca', // indigo 700 — 上下文已压缩标记（与 client/palette.ts 保持一致）
   summary: '#94a3b8', // slate 400 — Turn-level folded summary bar（与 client/palette.ts 保持一致）
   steering: '#14b8a6', // teal — steering rows (rc.8)
   other: '#64748b', // slate — every unlisted tool
@@ -103,6 +105,7 @@ export const Config = z.object({
     command: z.string().default(DEFAULT_COLORS.command),
     thinking: z.string().default(DEFAULT_COLORS.thinking),
     context: z.string().default(DEFAULT_COLORS.context),
+    compaction: z.string().default(DEFAULT_COLORS.compaction),
     summary: z.string().default(DEFAULT_COLORS.summary),
     steering: z.string().default(DEFAULT_COLORS.steering),
     other: z.string().default(DEFAULT_COLORS.other),

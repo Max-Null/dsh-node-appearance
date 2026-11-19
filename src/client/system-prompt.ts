@@ -1,10 +1,11 @@
 /**
  * 系统提示词行：把 0.2.0 起被 ui-chat 滤掉的「系统提示词」卡片画回来。
  *
- * 与上下文注入行同一处境、不同来源：`isVisibleChatNode()` 同时排除
- * `kind === 'system-prompt'`，而官方那两张卡（`system-message` 与 `request-prompt`
- * 两条 Definition）**仍在生成，只是不再渲染**——所以遮蔽同一个 key 同样没有意义，
- * 走的是与注入行一样的路子：注册自有 kind 接住同一批事件，再以该 kind 注册渲染器。
+ * 官方那两张卡（`system-message` 与 `request-prompt` 两条 Definition）**仍在生成，
+ * 只是被 `isVisibleChatNode()` 按 `kind === 'system-prompt'` 滤掉**——所以遮蔽同一个
+ * key 没有意义，走的是补位那条路子：注册自有 kind 接住同一批事件，再以该 kind 注册
+ * 渲染器。（上下文注入行原本同族，0.2.2 起官方不再滤 `context`，插件那份已撤，
+ * 详见 `palette.ts` 的 `CONTEXT_ROW`。）
  *
  * **只接管 `system-message` 这一半。** 它 match `system/message` 的 append，在系统
  * 提示词**发生变化**时产出一张卡：首轮一张（用户说的「会话发起时的系统提示词注入」

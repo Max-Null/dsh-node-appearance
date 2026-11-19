@@ -20,8 +20,6 @@ import { AskQuestionRow } from './ask-card.tsx'
 import { DeliverableRow } from './deliverable-row.tsx'
 import { GoalDetail } from './goal-detail.tsx'
 import { TriggerCard } from './trigger-card.tsx'
-import { CONTEXT_INJECTION_KIND, contextInjectionDefinition } from './context-injection.ts'
-import { ContextInjectionCard } from './context-injection-card.tsx'
 import { SkillRow } from './skill-row.tsx'
 import { SYSTEM_PROMPT_KIND, systemPromptDefinition } from './system-prompt.ts'
 import { SystemPromptCard } from './system-prompt-card.tsx'
@@ -203,13 +201,17 @@ export function apply(ctx: ClientContext): void {
     locale: 'chat',
   } as never, TriggerCard as never))
 
-  // 恢复被 0.2.0 滤掉的上下文注入行。
+  // 恢复被 0.2.0 滤掉的系统提示词卡。
   //
-  // 这里**不是接管**：ui-chat 的 `isVisibleChatNode()` 按 kind 排除 `context`，
-  // 官方那条节点根本走不到渲染（slot 分发轮不到它），遮蔽同一个 key 没有意义。
-  // 改为注册一条**自有 kind** 的 Definition 去接住同一批 `user/message`，再在
-  // 同一个 slot 上以该 kind 注册渲染器——`ChatNodeDataMap` 是 merge-extensible
-  // 的（注释原文即「业务模块贡献的渲染 kind」），这是官方留的口子。
+  // 这里**不是接管**：ui-chat 的 `isVisibleChatNode()` 按 kind 排除 `system-prompt`，
+  // 官方那两张卡根本走不到渲染（slot 分发轮不到它们），遮蔽同一个 key 没有意义。
+  // 改为注册一条**自有 kind** 的 Definition 去接住 `system/message`，再在同一个
+  // slot 上以该 kind 注册渲染器——`ChatNodeDataMap` 是 merge-extensible 的
+  // （注释原文即「业务模块贡献的渲染 kind」），这是官方留的口子。
+  //
+  // 上下文注入行本是同一处境，0.2.2 起不再需要：`isVisibleChatNode()` 已只排除
+  // `system-prompt`，官方 `ContextInjectionRow` 自己就把注入行画出来了，插件另造
+  // 节点会画成两份。现在那条行的配色与显隐开关都由 `palette.ts` 直接命中官方 kind。
   //
   // 走 `uiConversation` 服务而不是插件级 `inject` 声明它：服务缺席时只让这一个
   // 功能不生效，不该把整个插件拖成 pending —— 配色与其余卡片不必陪着消失。
@@ -228,12 +230,6 @@ export function apply(ctx: ClientContext): void {
       }
     }).uiConversation
     scoped.effect(
-      () => conversation.events.register(contextInjectionDefinition()),
-      'dsh-node-appearance: restore injected-context rows',
-    )
-    // 系统提示词卡与注入行同一处境（官方节点仍在生成、只是被 isVisibleChatNode 滤掉），
-    // 所以走同一条路子。只接管 `system/message` 那半 —— 详见 system-prompt.ts。
-    scoped.effect(
       () => conversation.events.register(
         systemPromptDefinition((previous, event) => conversation.inspectSystemPrompt(previous, event)),
       ),
@@ -249,12 +245,4 @@ export function apply(ctx: ClientContext): void {
     // 0.2.0 只是不再用它们画行了，key 没删。
     locale: 'chat',
   } as never, SystemPromptCard as never))
-
-  ctx.slots.inject('conversation.chat.node' as never, () => ctx.slots.register({
-    name: 'conversation.chat.node',
-    key: CONTEXT_INJECTION_KIND,
-    // 复用官方 chat 字典：`message.contextInjection` / `message.contextRecall`
-    // 两条文案都还在里面（0.2.0 只是不用它们画行了，key 没删）。
-    locale: 'chat',
-  } as never, ContextInjectionCard as never))
 }
